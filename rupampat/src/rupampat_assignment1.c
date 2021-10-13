@@ -302,7 +302,7 @@ void host__print_author() {
 // IP
 void host__print_ip_address() {
     cse4589_print_and_log("[IP:SUCCESS]\n");
-    cse4589_print_and_log("IP:%s\n", localhost->hostname);
+    cse4589_print_and_log("IP:%s\n", localhost->ip_addr);
     cse4589_print_and_log("[IP:END]\n");  
 }
 
