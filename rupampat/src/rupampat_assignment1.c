@@ -294,50 +294,50 @@ void host__init(bool is_server, char *port) {
 
 // AUTHOR
 void host__print_author() {
-    printf("[AUTHOR:SUCCESS]\n");
-    printf("I, rupampat, have read and understood the course academic integrity policy.\n");
-    printf("[AUTHOR:END]\n");
+    cse4589_print_and_log("[AUTHOR:SUCCESS]\n");
+    cse4589_print_and_log("I, rupampat, have read and understood the course academic integrity policy.\n");
+    cse4589_print_and_log("[AUTHOR:END]\n");
 }
 
 // IP
 void host__print_ip_address() {
-    printf("[IP:SUCCESS]\n");
-    printf("IP:%s\n", localhost->hostname);
-    printf("[IP:END]\n");  
+    cse4589_print_and_log("[IP:SUCCESS]\n");
+    cse4589_print_and_log("IP:%s\n", localhost->hostname);
+    cse4589_print_and_log("[IP:END]\n");  
 }
 
 void host__print_port() {
-    printf("[PORT:SUCCESS]\n");
-    printf("PORT:%s\n", localhost->port_num);
-    printf("[PORT:END]\n"); 
+    cse4589_print_and_log("[PORT:SUCCESS]\n");
+    cse4589_print_and_log("PORT:%s\n", localhost->port_num);
+    cse4589_print_and_log("[PORT:END]\n"); 
 }
 
 void host__print_list_of_clients() {
-    printf("[LIST:SUCCESS]\n");
+    cse4589_print_and_log("[LIST:SUCCESS]\n");
 
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-        printf("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
+        cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
         id = id + 1;
         temp = temp->next_host;
     }
     
-    printf("[LIST:END]\n"); 
+    cse4589_print_and_log("[LIST:END]\n"); 
 }
 
 void server__print_statistics() {
-    printf("[STATISTICS:SUCCESS]\n");
+    cse4589_print_and_log("[STATISTICS:SUCCESS]\n");
 
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-        printf("%-5d%-35s%-8d%-8d%-8s\n", id, temp->hostname, temp->num_msg_sent, temp->num_msg_rcv, temp->is_logged_in?"logged-in":"logged-out");
+        cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", id, temp->hostname, temp->num_msg_sent, temp->num_msg_rcv, temp->is_logged_in?"logged-in":"logged-out");
         id = id + 1;
         temp = temp->next_host;
     }
     
-    printf("[STATISTICS:END]\n"); 
+    cse4589_print_and_log("[STATISTICS:END]\n"); 
 }
 
 void server__print_blocked(char *blocker_ip_addr) {
@@ -345,7 +345,7 @@ void server__print_blocked(char *blocker_ip_addr) {
 
     struct host *temp = clients;
     while(temp!=NULL && strcmp(blocker_ip_addr, temp->ip_addr) != 0) {
-        temp = temp->next_host;
+        temp = temp->next_host;cse4589_print_and_log
     }
     temp = temp->blocked;
     int id = 1;
