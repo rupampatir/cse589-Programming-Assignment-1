@@ -345,7 +345,7 @@ void server__print_blocked(char *blocker_ip_addr) {
 
     struct host *temp = clients;
     while(temp!=NULL && strcmp(blocker_ip_addr, temp->ip_addr) != 0) {
-        temp = temp->next_host;cse4589_print_and_log
+        temp = temp->next_host;
     }
     temp = temp->blocked;
     int id = 1;
