@@ -911,14 +911,12 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
                 new_client->next_host = clients;
                 clients = new_client;
             } else {
-                struct host *prev = clients;
-                struct host *temp = clients->next_host;
-                while(temp != NULL && atoi(temp->port_num) > client_port_value) {
-                    prev = temp;
+                struct host *temp = clients;
+                while (temp->next_host != NULL && atoi(temp->next_host->port_num) < client_port_value) {
                     temp = temp->next_host;
                 }
-                new_client->next_host = prev->next_host;
-                prev->next_host = new_client;
+                new_client->next_host = temp->next_host;
+                temp->next_host = new_client;
             }
 
         }
