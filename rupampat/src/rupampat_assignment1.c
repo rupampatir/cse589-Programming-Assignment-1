@@ -955,6 +955,39 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
         char receive[MAXDATASIZE*3];
 
         while(temp_message!= NULL) {
+            // check if the from client exited 
+            bool invalid_message = true;
+            struct host *temp_exited = clients;
+            while (temp_exited!=NULL) {
+                if (strstr(temp_message->from_client->ip_addr, temp_exited->ip_addr) != NULL) {
+                    invalid_message = false;
+                    break;
+                }
+                temp_exited=temp_exited->next_host;
+            }
+            if (invalid_message) {
+                host__send_command(temp_message->from_client->fd, "ERRORSEND\n"); //CHECK THIS WOLOLO
+                temp_message = temp_message->next_message;
+                continue;
+            }
+
+            invalid_message = false;
+            // check if the from client blocked 
+            struct host *temp_blocked = requesting_client->blocked;
+            while (temp_blocked!=NULL) {
+                if (strstr(temp_message->from_client->ip_addr, temp_blocked->ip_addr) != NULL) {
+                    invalid_message = true;
+                    break;
+                }
+                temp_blocked=temp_blocked->next_host;
+            }
+
+            if (invalid_message) {
+                host__send_command(temp_message->from_client->fd, "SUCCESSSEND\n"); //CHECK THIS WOLOLO
+                temp_message = temp_message->next_message;
+                continue;
+            }
+
             requesting_client->num_msg_rcv++;
             sprintf(receive, "RECEIVE %s %s\n", temp_message->from_client->ip_addr, temp_message->text);
             strcat(client_return_msg, receive);
