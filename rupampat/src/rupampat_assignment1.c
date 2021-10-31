@@ -1104,6 +1104,7 @@ void common__execute_command(char command[], int requesting_client_fd) {
     } else if (strstr(command, "LIST") != NULL) {
         host__print_list_of_clients();
     }
+    fflush(stdout);
 }
 
 void server__execute_command(char command[], int requesting_client_fd) {
@@ -1151,6 +1152,7 @@ void server__execute_command(char command[], int requesting_client_fd) {
     } else if (strstr(command, "EXIT") != NULL) {
         server__handle_exit(requesting_client_fd);
     }
+    fflush(stdout);
 }
 
 void client__execute_command(char command[]) {
@@ -1160,7 +1162,7 @@ void client__execute_command(char command[]) {
     } else if (strstr(command, "ERRORLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:ERROR]\n");  
         cse4589_print_and_log("[LOGIN:END]\n");
-    } else if (strstr(command, "SUCCESSLOGOUT\n") != NULL) {
+    } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
         cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
         cse4589_print_and_log("[LOGOUT:END]\n");
     } else if (strstr(command, "ERRORLOGOUT") != NULL) {
@@ -1247,6 +1249,7 @@ void client__execute_command(char command[]) {
         //split the command into the two arguments. may beed to return pointer from strstr
         // client__send(command, command); 
     }
+    fflush(stdout);
 }
 
 void execute_command(char command[], int requesting_client_fd) {
@@ -1258,6 +1261,7 @@ void execute_command(char command[], int requesting_client_fd) {
     } else {
         client__execute_command(command);
     }
+    fflush(stdout);
 
 }
 
