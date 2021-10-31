@@ -994,25 +994,26 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     }
 
     from_client->num_msg_sent++;
+    // CHECK IF SENDER IS BLOCKED (FROM IS BLOCKED BY TO)
+
+    bool is_blocked = false;
+
+    temp = to_client;
+    temp = temp->blocked;
+    while(temp!=NULL) {
+        if (strstr(from_client->ip_addr, temp->ip_addr) != NULL) {
+            is_blocked = true;
+            break;
+        }
+        temp = temp->next_host;
+    }
+
+    if (is_blocked) {
+        return;
+    }
 
     if (to_client->is_logged_in) {
-        // CHECK IF SENDER IS BLOCKED (FROM IS BLOCKED BY TO)
 
-        bool is_blocked = false;
-
-        temp = to_client;
-        temp = temp->blocked;
-        while(temp!=NULL) {
-            if (strstr(from_client->ip_addr, temp->ip_addr) != NULL) {
-                is_blocked = true;
-                break;
-            }
-            temp = temp->next_host;
-        }
-
-        if (is_blocked) {
-            return;
-        }
         to_client->num_msg_rcv++;
         sprintf(receive, "RECEIVE %s %s\n", from_client->ip_addr, msg);
         host__send_command(to_client->fd, receive);
