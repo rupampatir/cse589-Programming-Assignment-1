@@ -1095,9 +1095,9 @@ void server__handle_exit(int requesting_client_fd) {
             while(temp!=NULL) {
                 if (temp->fd == requesting_client_fd) {
                     previous->next_host = temp->next_host;
+                    temp = temp->next_host;
                     continue;
                 }
-                //remove client from blocked lists
                 struct host *temp_blocked = temp->blocked;
                 if (temp_blocked->fd == requesting_client_fd) {
                     temp->blocked = temp->blocked->next_host;
