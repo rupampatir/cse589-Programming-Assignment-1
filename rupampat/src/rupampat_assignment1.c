@@ -643,9 +643,10 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
         while (token != NULL) {
-            if (strstr(token, "COMPLETELOGIN\n")) {
+            if (strstr(token, "COMPLETELOGIN")) {
                 cse4589_print_and_log("[LOGIN:SUCCESS]\n");
                 cse4589_print_and_log("[LOGIN:END]\n");
+                token = strtok(NULL, delimmiter);
             } else if (strstr(token, "RECEIVE")) {
                 sscanf(token, "%[^\n]", command);
                 token = strtok(NULL, delimmiter);
