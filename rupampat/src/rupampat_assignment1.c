@@ -780,6 +780,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
         memcpy(new_blocked_client->port_num, blocked_client->port_num, sizeof(new_blocked_client->port_num));
         memcpy(new_blocked_client->hostname, blocked_client->hostname, sizeof(new_blocked_client->hostname));
         new_blocked_client->fd = blocked_client->fd;
+        new_blocked_client->next_host = NULL;
         if (localhost->blocked != NULL) {
             struct host *temp_blocked = localhost->blocked;
             while(temp_blocked->next_host !=NULL) {
@@ -846,7 +847,7 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
             memcpy(new_blocked_client->port_num, blocked_client->port_num, sizeof(new_blocked_client->port_num));
             memcpy(new_blocked_client->hostname, blocked_client->hostname, sizeof(new_blocked_client->hostname));
             new_blocked_client->fd = blocked_client->fd;
-            
+            new_blocked_client->next_host = NULL;
             int new_blocked_client_port_value = atoi(new_blocked_client->port_num);
             if (requesting_client->blocked == NULL) {
                 requesting_client->blocked = malloc(sizeof(struct host));
