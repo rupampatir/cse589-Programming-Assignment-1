@@ -1196,8 +1196,8 @@ void client__execute_command(char command[]) {
         cse4589_print_and_log("[LOGOUT:ERROR]\n");  
         cse4589_print_and_log("[LOGOUT:END]\n");
     } else if (strstr(command, "SUCCESSBROADCAST") != NULL) {
-        cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
-        cse4589_print_and_log("[BROADCAST:END]\n");
+        // cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
+        // cse4589_print_and_log("[BROADCAST:END]\n");
     } else if (strstr(command, "SUCCESSUNBLOCK") != NULL) {
         cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");  
         cse4589_print_and_log("[UNBLOCK:END]\n");
