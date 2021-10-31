@@ -864,6 +864,7 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
                 requesting_client->blocked = requesting_client->blocked->next_host;
             } else {
                 struct host *previous = temp_blocked;
+                temp_blocked = temp_blocked->next_host;
                 while(temp_blocked!=NULL) {
                     if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
                         previous->next_host = temp_blocked->next_host;
