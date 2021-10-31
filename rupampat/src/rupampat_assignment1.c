@@ -1050,9 +1050,9 @@ void server__handle_logout(int requesting_client_fd) {
 }
 
 void client__handle_receive(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE]) {
- cse4589_print_and_log("[EVENT:SUCCESS]\n");  
+ cse4589_print_and_log("[RECEIVED:SUCCESS]\n");  
  cse4589_print_and_log("msg from:%s\n[msg]:%s\n", client_ip, msg);
- cse4589_print_and_log("[EVENT:END]\n");
+ cse4589_print_and_log("[RECEIVED:END]\n");
 }
 
 void server__handle_exit(int requesting_client_fd) {
