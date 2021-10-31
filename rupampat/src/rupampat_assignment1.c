@@ -643,20 +643,29 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
         while (token != NULL) {
-            struct host *new_client = malloc(sizeof(struct host));
-            sscanf(token, "%s %s %s\n", client_ip, client_port, client_hostname);
-            token = strtok(NULL, delimmiter);
-            clientListString += read;
-            memcpy(new_client->port_num, client_port, sizeof(new_client->port_num));
-            memcpy(new_client->ip_addr, client_ip, sizeof(new_client->ip_addr));
-            memcpy(new_client->hostname, client_hostname, sizeof(new_client->hostname));
-            clients->next_host = new_client;
-            clients = clients->next_host;
+            if (strstr(token, "RECEIVE")) {
+                sscanf(token, "%[^\n]", command);
+                token = strtok(NULL, delimmiter);
+                client__execute_command(command);
+            } else {
+                struct host *new_client = malloc(sizeof(struct host));
+                sscanf(token, "%s %s %s\n", client_ip, client_port, client_hostname);
+                token = strtok(NULL, delimmiter);
+                clientListString += read;
+                memcpy(new_client->port_num, client_port, sizeof(new_client->port_num));
+                memcpy(new_client->ip_addr, client_ip, sizeof(new_client->ip_addr));
+                memcpy(new_client->hostname, client_hostname, sizeof(new_client->hostname));
+                clients->next_host = new_client;
+                clients = clients->next_host;
+            }
         }
         clients = head->next_host;
         if (strstr(first, "NOTFIRST")) {
             cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
             cse4589_print_and_log("[REFRESH:END]\n");
+        } else {
+            cse4589_print_and_log("[LOGIN:SUCCESS]\n");  
+            cse4589_print_and_log("[LOGIN:END]\n");
         }
     } else if (strstr(first, "NOTFIRST")) {
         cse4589_print_and_log("[REFRESH:ERROR]\n");  
@@ -930,7 +939,6 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             temp = temp->next_host;
         }
         requesting_client->is_logged_in = true;
-        host__send_command(requesting_client_fd, client_return_msg);
 
         
         struct message *temp_message = requesting_client->queued_messages;
@@ -939,8 +947,9 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
         while(temp_message!= NULL) {
             requesting_client->num_msg_rcv++;
             sprintf(receive, "RECEIVE %s %s\n", temp_message->from_client->ip_addr, temp_message->text);
-            sleep(0);
-            host__send_command(requesting_client_fd, receive);
+            // host__send_command(requesting_client_fd, receive);
+            strcat(client_return_msg, receive);
+
             if (!temp_message->is_broadcast) {
                 cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
                 cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
@@ -948,8 +957,8 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             }
             temp_message = temp_message->next_message;
         }
+        requesting_client->queued_messages = malloc(sizeof(struct message));
         sleep(0);
-        host__send_command(requesting_client_fd, "SUCCESSLOGIN");
 
 }
 
