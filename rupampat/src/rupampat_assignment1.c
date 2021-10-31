@@ -708,8 +708,9 @@ void server__broadcast(char msg[], int requesting_client_fd) {
         }
 
         char receive[MAXDATASIZE*3];
-        to_client->num_msg_rcv++;
+        
         if (to_client->is_logged_in) {
+            to_client->num_msg_rcv++;
             sprintf(receive, "RECEIVE %s %s\n", from_client->ip_addr, msg);
             host__send_command(to_client->fd, receive);
         } else {                        
