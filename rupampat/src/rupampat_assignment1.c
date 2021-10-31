@@ -847,15 +847,23 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
             memcpy(new_blocked_client->port_num, blocked_client->port_num, sizeof(new_blocked_client->port_num));
             memcpy(new_blocked_client->hostname, blocked_client->hostname, sizeof(new_blocked_client->hostname));
             new_blocked_client->fd = blocked_client->fd;
-            if (requesting_client->blocked != NULL) {
-                struct host *temp_blocked = requesting_client->blocked;
-                while(temp_blocked->next_host !=NULL) {
-                    temp_blocked = temp_blocked->next_host;
-                }
-                temp_blocked->next_host = new_blocked_client;
-            } else {
+            
+            int new_blocked_client_port_value = atoi(new_blocked_client->port_num);
+            if (requesting_client->blocked == NULL) {
+                requesting_client->blocked = malloc(sizeof(struct host));
                 requesting_client->blocked = new_blocked_client;
+            } else if (new_blocked_client_port_value < atoi(requesting_client->blocked->port_num)) {
+                new_blocked_client->next_host = requesting_client->blocked;
+                requesting_client->blocked = new_blocked_client;
+            } else {
+                struct host *temp = requesting_client->blocked;
+                while (temp->next_host != NULL && atoi(temp->next_host->port_num) < new_blocked_client_port_value) {
+                    temp = temp->next_host;
+                }
+                new_blocked_client->next_host = temp->next_host;
+                temp->next_host = new_blocked_client;
             }
+        
             host__send_command(requesting_client_fd, "SUCCESSBLOCK\n");
         } else {
             struct host *temp_blocked = requesting_client->blocked;
@@ -954,7 +962,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
                cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
                cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
                cse4589_print_and_log("[RELAYED:END]\n");
-               host__send_command(temp_message->from_client->fd, "SUCCESSSEND\n\n"); //CHECK THIS WOLOLO
+               host__send_command(temp_message->from_client->fd, "SUCCESSSEND\n"); //CHECK THIS WOLOLO
             }
             temp_message = temp_message->next_message;
         }
@@ -1015,7 +1023,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
         cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
         cse4589_print_and_log("[RELAYED:END]\n");
-        host__send_command(from_client->fd, "SUCCESSEND");
+        host__send_command(from_client->fd, "SUCCESSEND\n");
         return;
     }
 
@@ -1195,7 +1203,7 @@ void client__execute_command(char command[]) {
         client__refresh_client_list(command);
     } else if (strstr(command, "REFRESH") != NULL) {
         if (localhost->is_logged_in) {
-            host__send_command(server->fd, "REFRESH");
+            host__send_command(server->fd, "REFRESH\n");
         } else {
            cse4589_print_and_log("[REFRESH:ERROR]\n");
            cse4589_print_and_log("[REFRESH:END]\n");
