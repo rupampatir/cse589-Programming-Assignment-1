@@ -553,8 +553,6 @@ void client__login(char server_ip[], char server_port[]) {
     char msg[MAXDATASIZEBACKGROUND];
     sprintf(msg, "LOGIN %s %s %s", localhost->ip_addr, localhost->port_num, localhost->hostname);
     host__send_command(server->fd, msg);
- cse4589_print_and_log("[LOGIN:SUCCESS]\n");
- cse4589_print_and_log("[LOGIN:END]\n"); 
 
     // Now we have a server_fd. We add it to he master list of fds along with stdin.
     fd_set master;                          // master file descriptor list
@@ -645,7 +643,10 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
         while (token != NULL) {
-            if (strstr(token, "RECEIVE")) {
+            if (strstr(token, "COMPLETELOGIN\n")) {
+                cse4589_print_and_log("[LOGIN:SUCCESS]\n");
+                cse4589_print_and_log("[LOGIN:END]\n");
+            } else if (strstr(token, "RECEIVE")) {
                 sscanf(token, "%[^\n]", command);
                 token = strtok(NULL, delimmiter);
                 client__execute_command(command);
@@ -955,7 +956,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             }
             temp_message = temp_message->next_message;
         }
-
+        strcat(client_return_msg, "COMPLETELOGIN\n");
         host__send_command(requesting_client_fd, client_return_msg);
 }
 
@@ -988,8 +989,8 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     }
     if (to_client == NULL) {
         // TODO: CHECK IF THIS IS REQUIRED
-     cse4589_print_and_log("[RELAYED:ERROR]\n");  
-     cse4589_print_and_log("[RELAYED:END]\n");
+        cse4589_print_and_log("[RELAYED:ERROR]\n");  
+        cse4589_print_and_log("[RELAYED:END]\n");
         return;
     }
 
@@ -998,8 +999,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
 
     bool is_blocked = false;
 
-    temp = to_client;
-    temp = temp->blocked;
+    temp = to_client->blocked;
     while(temp!=NULL) {
         if (strstr(from_client->ip_addr, temp->ip_addr) != NULL) {
             is_blocked = true;
@@ -1009,11 +1009,12 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     }
 
     if (is_blocked) {
+        cse4589_print_and_log("[RELAYED:ERROR]\n");  
+        cse4589_print_and_log("[RELAYED:END]\n");
         return;
     }
 
     if (to_client->is_logged_in) {
-
         to_client->num_msg_rcv++;
         sprintf(receive, "RECEIVE %s %s\n", from_client->ip_addr, msg);
         host__send_command(to_client->fd, receive);
