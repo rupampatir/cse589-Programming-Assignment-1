@@ -92,7 +92,7 @@ bool host__check_valid_ip_addr(char ip_addr[MAXDATASIZE]) {
 
 // The following function has been used from https://www.geeksforgeeks.org/c-program-display-hostname-ip-address/
 void host__set_hostname_and_ip(struct host *h) {
-    char hostbuffer[256];
+    char hostbuffer[MAXDATASIZE];
     char *IPbuffer;
     struct hostent *host_entry;
     int hostname;
@@ -551,7 +551,7 @@ void client__login(char server_ip[], char server_port[]) {
     localhost->is_logged_in = true;
     
     char msg[MAXDATASIZEBACKGROUND];
-    sprintf(msg, "LOGIN %s %s %s", localhost->ip_addr, localhost->port_num, localhost->hostname);
+    sprintf(msg, "LOGIN %s %s %s\n", localhost->ip_addr, localhost->port_num, localhost->hostname);
     host__send_command(server->fd, msg);
     
     // Now we have a server_fd. We add it to he master list of fds along with stdin.
@@ -743,7 +743,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
    cse4589_print_and_log("[RELAYED:SUCCESS]\n"); 
    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client->ip_addr, msg);
    cse4589_print_and_log("[RELAYED:END]\n");
-   host__send_command(from_client->fd, "SUCCESSBROADCAST \n");
+   host__send_command(from_client->fd, "SUCCESSBROADCAST\n");
 }
 
 void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
