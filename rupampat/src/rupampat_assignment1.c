@@ -41,7 +41,6 @@
 
 #define MAXDATASIZE 256
 #define MAXDATASIZEBACKGROUND 3000
-//TODO: Check if stdin and STDIN are different
 #define STDIN 0
 
 struct message {
@@ -57,7 +56,7 @@ struct host {
     int num_msg_sent;
     int num_msg_rcv;
     char status[MAXDATASIZE];
-    int fd; // TODO: See if this is required
+    int fd;
     struct host *blocked;
     struct host *next_host;
     bool is_logged_in;
@@ -194,7 +193,7 @@ void server__init() {
 					new_client_fd = accept(listener, (struct sockaddr *)&new_client_addr, &addrlen);
 
 					if (new_client_fd == -1) {
-                        // changePrint("DONOTLOG: Could not accept new connection."); // TODO: Remove this
+                        // changePrint("DONOTLOG: Could not accept new connection.");
                     } else {
                         // We register the new client onto our system here.
                         struct host *new_client = malloc(sizeof(struct host));
@@ -277,7 +276,6 @@ void client__init() {
         // handle data from standard input
         char *command = (char*)malloc(sizeof(char)*MAXDATASIZE);
         memset(command, '\0', MAXDATASIZE);
-        // TODO: Check if there is a newline at the end of the buffer
         if(fgets(command, MAXDATASIZE, stdin) == NULL) {
             // changePrint("DONOTLOG: Something went wrong reading stdin");
         } else {
@@ -349,10 +347,10 @@ void server__print_statistics() {
    cse4589_print_and_log("[STATISTICS:END]\n"); 
 }
 
-void server__print_blocked(char blocker_ip_addr[MAXDATASIZE], char blocker_port_num[MAXDATASIZE]) {
+void server__print_blocked(char blocker_ip_addr[MAXDATASIZE]) {
     struct host *temp = clients;
     while(temp!=NULL) {
-        if (strstr(blocker_ip_addr, temp->ip_addr) != NULL && strstr(blocker_port_num, temp->port_num) != NULL) {
+        if (strstr(blocker_ip_addr, temp->ip_addr) != NULL) {
             break;
         }
         temp = temp->next_host;
@@ -630,7 +628,7 @@ void client__login(char server_ip[], char server_port[]) {
                     int new_peer_fd = accept(fd, (struct sockaddr *)&new_peer_addr, &addrlen);
 
 					if (new_peer_fd == -1) {
-                        // changePrint("DONOTLOG: Could not accept new connection."); // TODO: Remove this
+                        // changePrint("DONOTLOG: Could not accept new connection.");
                     } else {
                         receive_file_from_peer(new_peer_fd);
                     }
@@ -691,7 +689,7 @@ void host__send_command(int fd, char msg[]) {
     }
 }
 
-void server__broadcast(char *msg, int requesting_client_fd) {
+void server__broadcast(char msg[], int requesting_client_fd) {
     struct host *temp = clients;
     struct host *from_client = NULL;
     while(temp!=NULL) {
@@ -756,17 +754,17 @@ void server__broadcast(char *msg, int requesting_client_fd) {
 }
 
 void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
-    char client_ip[MAXDATASIZE], client_port[MAXDATASIZE];;
+    char client_ip[MAXDATASIZE];
     if (is_a_block) {
-        sscanf(command, "BLOCK %s %s\n", client_ip, client_port);
+        sscanf(command, "BLOCK %s\n", client_ip);
     } else {
-        sscanf(command, "UNBLOCK %s %s\n", client_ip, client_port);
+        sscanf(command, "UNBLOCK %s\n", client_ip);
     }
 
     // To check if its in the LIST
     struct host *temp = clients;
     while(temp!=NULL) {
-        if (strstr(client_ip, temp->ip_addr) != NULL && strstr(client_port, temp->port_num) != NULL) { // TODO: Remove the second check
+        if (strstr(client_ip, temp->ip_addr) != NULL) {
             break;
         }
         temp = temp->next_host;
@@ -776,7 +774,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
     // To check if it's already blocked
     temp = localhost->blocked;
     while(temp!=NULL) {
-        if (strstr(client_ip, temp->ip_addr) != NULL && strstr(client_port, temp->port_num) != NULL) { // TODO: Remove the second check
+        if (strstr(client_ip, temp->ip_addr) != NULL) {
             break;
         }
         temp = temp->next_host;
@@ -803,12 +801,12 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
        cse4589_print_and_log("[BLOCK:END]\n");
     } else if (blocked_client != NULL && blocked_client_2 != NULL && !is_a_block) {
         struct host *temp_blocked = localhost->blocked;
-        if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL && strstr(blocked_client->port_num, temp_blocked->port_num) != NULL) { // TODO: Remove the second check
+        if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
             localhost->blocked = localhost->blocked->next_host;
         } else {
             struct host *previous = temp_blocked;
             while(temp_blocked!=NULL) {
-                if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL && strstr(blocked_client->port_num, temp_blocked->port_num) != NULL) { // TODO: Remove the second check
+                if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
                     previous->next_host = temp_blocked->next_host;
                     break;
                 }
@@ -845,7 +843,7 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
         if (temp->fd == requesting_client_fd) {
             requesting_client = temp;
         }
-        if (strstr(client_ip, temp->ip_addr) != NULL && strstr(client_port, temp->port_num) != NULL) { // TODO: Remove the second check
+        if (strstr(client_ip, temp->ip_addr) != NULL) {
             blocked_client = temp;
         }
         temp = temp->next_host;
@@ -869,12 +867,12 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
             }
         } else {
             struct host *temp_blocked = requesting_client->blocked;
-            if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL && strstr(blocked_client->port_num, temp_blocked->port_num) != NULL) { // TODO: Remove the second check
+            if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
                 requesting_client->blocked = requesting_client->blocked->next_host;
             } else {
                 struct host *previous = temp_blocked;
                 while(temp_blocked!=NULL) {
-                    if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL && strstr(blocked_client->port_num, temp_blocked->port_num) != NULL) { // TODO: Remove the second check
+                    if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
                         previous->next_host = temp_blocked->next_host;
                         break;
                     }
@@ -911,7 +909,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
         
         while(temp!=NULL && temp->fd) {
             char clientString[MAXDATASIZEBACKGROUND];
-            if (temp->fd == requesting_client_fd) { // TODO: Remove the second check
+            if (temp->fd == requesting_client_fd) {
                 memcpy(temp->hostname, client_hostname, sizeof(temp->hostname));
                 memcpy(temp->port_num, client_port, sizeof(temp->port_num));
                 requesting_client = temp;
@@ -922,8 +920,6 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
         }
         requesting_client->is_logged_in = true;
 
-
-         // TODO : REMOVE PORT
         
         struct message *temp_message = requesting_client->queued_messages;
         char receive[MAXDATASIZE*3];
@@ -955,13 +951,13 @@ void server__handle_refresh(int requesting_client_fd) {
         host__send_command(requesting_client_fd, clientListString);
 }
 
-void server__handle_send(char client_ip[MAXDATASIZE], char client_port[MAXDATASIZE], char msg[MAXDATASIZE] , int requesting_client_fd) {
+void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , int requesting_client_fd) {
 
     char receive[MAXDATASIZE*3];
     struct host *temp = clients;
     struct host *from_client = NULL, *to_client = NULL;
     while(temp!=NULL) {
-        if (strstr(client_ip, temp->ip_addr) != NULL && strstr(client_port, temp->port_num) != NULL) { // TODO: Remove the second check
+        if (strstr(client_ip, temp->ip_addr) != NULL) {
             to_client = temp;
         } else if (requesting_client_fd == temp->fd) {
             from_client = temp;
@@ -986,7 +982,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char client_port[MAXDATASI
         temp = to_client;
         temp = temp->blocked;
         while(temp!=NULL) {
-            if (strstr(from_client->ip_addr, temp->ip_addr) != NULL && strstr(from_client->port_num, temp->port_num) != NULL) { // TODO: Remove the second check
+            if (strstr(from_client->ip_addr, temp->ip_addr) != NULL) {
                 is_blocked = true;
                 break;
             }
@@ -1025,7 +1021,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char client_port[MAXDATASI
 void server__handle_logout(int requesting_client_fd) {
     struct host *temp = clients;
     while(temp!=NULL) {
-        if (temp->fd == requesting_client_fd) { // TODO: Remove the second check
+        if (temp->fd == requesting_client_fd) {
             temp->is_logged_in = false;
             break;
         }
@@ -1046,7 +1042,7 @@ void server__handle_exit(int requesting_client_fd) {
         } else {
             struct host *previous = temp;
             while(temp!=NULL) {
-                if (temp->fd == requesting_client_fd) { // TODO: Remove the second check
+                if (temp->fd == requesting_client_fd) {
                     previous->next_host = temp->next_host;
                     break;
                 }
@@ -1077,10 +1073,10 @@ void server__execute_command(char command[], int requesting_client_fd) {
     if (strstr(command, "STATISTICS") != NULL) {
         server__print_statistics();
     } else if (strstr(command, "BLOCKED") != NULL) {
-        char client_ip[MAXDATASIZE], client_port[MAXDATASIZE];
-        sscanf(command, "BLOCKED %s %s", client_ip, client_port);
-        server__print_blocked(client_ip, client_port);
-    } else if (strstr(command, "LOGIN") != NULL) { // takes two arguments server ip and server port
+        char client_ip[MAXDATASIZE];
+        sscanf(command, "BLOCKED %s", client_ip);
+        server__print_blocked(client_ip);
+    } else if (strstr(command, "LOGIN") != NULL) {
         char client_hostname[MAXDATASIZE], client_port[MAXDATASIZE], client_ip[MAXDATASIZE];
         sscanf(command, "LOGIN %s %s %s", client_ip, client_port, client_hostname);
         server__handle_login(client_ip, client_port, client_hostname, requesting_client_fd);
@@ -1091,10 +1087,9 @@ void server__execute_command(char command[], int requesting_client_fd) {
     } else if (strstr(command, "REFRESH") != NULL) {
         server__handle_refresh(requesting_client_fd);
     } else if (strstr(command, "SEND") != NULL) {
-        // TODO : REMOVE PORT
-        char client_ip[MAXDATASIZE], msg[MAXDATASIZE], client_port[MAXDATASIZE];
-        sscanf(command, "SEND %s %s %[^\n]", client_ip, client_port, msg);
-        server__handle_send(client_ip, client_port, msg, requesting_client_fd);
+        char client_ip[MAXDATASIZE], msg[MAXDATASIZE];
+        sscanf(command, "SEND %s %[^\n]", client_ip, msg);
+        server__handle_send(client_ip, msg, requesting_client_fd);
     } else if (strstr(command, "UNBLOCK") != NULL) {
         server__block_or_unblock(command, false, requesting_client_fd); 
     } else if (strstr(command, "BLOCK") != NULL) {
