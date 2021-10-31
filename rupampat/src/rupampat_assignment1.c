@@ -570,7 +570,7 @@ void client__login(char server_ip[], char server_port[]) {
     socklen_t addrlen = sizeof new_peer_addr;
     
     // main loop
-    // while(localhost->is_logged_in) {
+    while(localhost->is_logged_in) {
         read_fds = master;              // make a copy of master set
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
             // changePrint("DONOTLOG: Could not select()");
@@ -626,7 +626,7 @@ void client__login(char server_ip[], char server_port[]) {
         }
 
         fflush(stdout);
-    // }
+    }
     
     return;
     
@@ -1251,7 +1251,7 @@ void client__execute_command(char command[]) {
         }
     } else if (strstr(command, "LOGOUT") != NULL) {
         if (localhost->is_logged_in) {
-            host__send_command(server->fd, "LOGOUT");
+            host__send_command(server->fd, command);
         } else {
            cse4589_print_and_log("[LOGOUT:ERROR]\n");
            cse4589_print_and_log("[LOGOUT:END]\n");
