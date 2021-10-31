@@ -222,7 +222,7 @@ void server__init() {
                     // handle data from standard input
                     char *command = (char*) malloc(sizeof(char)*MAXDATASIZE);
                     memset(command, '\0', MAXDATASIZE);
-                    if(fgets(command, MAXDATASIZE, stdin) == NULL) { // -1 because of new line
+                    if(fgets(command, MAXDATASIZE - 1, stdin) == NULL) { // -1 because of new line
                         // changePrint("DONOTLOG: Something went wrong reading stdin");
                     } else {
                         execute_command(command, fd);
