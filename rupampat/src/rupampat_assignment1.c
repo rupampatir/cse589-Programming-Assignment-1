@@ -790,8 +790,6 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
             localhost->blocked = new_blocked_client;
         }
         host__send_command(server->fd, command);
-       cse4589_print_and_log("[BLOCK:SUCCESS]\n");  
-       cse4589_print_and_log("[BLOCK:END]\n");
     } else if (blocked_client != NULL && blocked_client_2 != NULL && !is_a_block) {
         struct host *temp_blocked = localhost->blocked;
         if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
@@ -807,8 +805,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
             }
         }
         host__send_command(server->fd, command);
-       cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");  
-       cse4589_print_and_log("[UNBLOCK:END]\n");
+       
     } else {
         if (is_a_block) {
            cse4589_print_and_log("[BLOCK:ERROR]\n");  
@@ -858,6 +855,7 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
             } else {
                 requesting_client->blocked = new_blocked_client;
             }
+            host__send_command(requesting_client_fd, "SUCCESSBLOCK\n");
         } else {
             struct host *temp_blocked = requesting_client->blocked;
             if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
@@ -873,6 +871,13 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
                     temp_blocked = temp_blocked->next_host;
                 }
             }
+            host__send_command(requesting_client_fd, "SUCCESSUNBLOCK\n");
+        }
+    } else {
+        if (is_a_block) {
+            host__send_command(requesting_client_fd, "ERRORBLOCK\n");
+        } else {
+            host__send_command(requesting_client_fd, "ERRORUNBLOCK\n");
         }
     }
 }
@@ -1166,7 +1171,19 @@ void client__execute_command(char command[]) {
     } else if (strstr(command, "SUCCESSBROADCAST") != NULL) {
         cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
         cse4589_print_and_log("[BROADCAST:END]\n");
-    }  else if (strstr(command, "SUCCESSSEND") != NULL) {
+    } else if (strstr(command, "SUCCESSUNBLOCK") != NULL) {
+        cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");  
+        cse4589_print_and_log("[UNBLOCK:END]\n");
+    } else if (strstr(command, "SUCCESSBLOCK") != NULL) {
+        cse4589_print_and_log("[BLOCK:SUCCESS]\n");  
+        cse4589_print_and_log("[BLOCK:END]\n");
+    } else if (strstr(command, "ERRORUNBLOCK") != NULL) {
+        cse4589_print_and_log("[UNBLOCK:ERROR]\n");  
+        cse4589_print_and_log("[UNBLOCK:END]\n");
+    } else if (strstr(command, "ERRORBLOCK") != NULL) {
+        cse4589_print_and_log("[BLOCK:ERROR]\n");  
+        cse4589_print_and_log("[BLOCK:END]\n");
+    } else if (strstr(command, "SUCCESSSEND") != NULL) {
         cse4589_print_and_log("[SEND:SUCCESS]\n");
         cse4589_print_and_log("[SEND:END]\n");
     } else if (strstr(command, "LOGIN") != NULL) { // takes two arguments server ip and server port
