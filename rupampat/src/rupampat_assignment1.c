@@ -941,9 +941,11 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
 
         temp = clients;
         while(temp!=NULL) {
-            char clientString[MAXDATASIZEBACKGROUND];
-            sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
-            strcat(client_return_msg, clientString);
+            if (temp->is_logged_in) {
+                char clientString[MAXDATASIZEBACKGROUND];
+                sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
+                strcat(client_return_msg, clientString);
+            }
             temp = temp->next_host;
         }
         requesting_client->is_logged_in = true;
