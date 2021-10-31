@@ -1158,14 +1158,30 @@ void client__execute_command(char command[]) {
         client__login(server_ip, server_port);
     } else if (strstr(command, "REFRESHRESPONSE") != NULL) {
         client__refresh_client_list(command);
-    } else if (strstr(command, "REFRESH") != NULL && client__check_login("REFRESH")) {
-        host__send_command(server->fd, "REFRESH");
-    } else if (strstr(command, "SENDFILE") != NULL && client__check_login("SENDFILE")) {
-        char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
+    } else if (strstr(command, "REFRESH") != NULL) {
+        if (localhost->is_logged_in) {
+            host__send_command(server->fd, "REFRESH");
+        } else {
+            printf("[REFRESH:ERROR]\n");
+            printf("[REFRESH:END]\n");
+        }
+    } else if (strstr(command, "SENDFILE") != NULL) {
+                if (localhost->is_logged_in) {
+char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
         sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
         client__P2P_file_transfer(peer_ip, file_name);
-    } else if (strstr(command, "SEND") != NULL && client__check_login("SEND")) {
+         } else {
+            printf("[SENDFILE:ERROR]\n");
+            printf("[SENDFILE:END]\n");
+        }
+    } else if (strstr(command, "SEND") != NULL ) {
+                if (localhost->is_logged_in) {
+
         client__send(command);
+         } else {
+            printf("[SEND:ERROR]\n");
+            printf("[SEND:END]\n");
+        }
     } else if (strstr(command, "RECEIVE") != NULL) {
         char client_ip[MAXDATASIZE], message[MAXDATASIZE];
         sscanf(command, "RECEIVE %s", client_ip);
@@ -1178,14 +1194,38 @@ void client__execute_command(char command[]) {
         }
         message[msgi-1]='\0';
         client__handle_receive(client_ip, message);
-    } else if (strstr(command, "BROADCAST") != NULL && client__check_login("BROADCAST")) {
+    } else if (strstr(command, "BROADCAST") != NULL ) {
+                if (localhost->is_logged_in) {
+
         host__send_command(server->fd, command); 
-    } else if (strstr(command, "UNBLOCK") != NULL && client__check_login("UNBLOCK")) {
+         } else {
+            printf("[BROADCAST:ERROR]\n");
+            printf("[BROADCAST:END]\n");
+        }
+    } else if (strstr(command, "UNBLOCK") != NULL ) {
+                if (localhost->is_logged_in) {
+
         client__block_or_unblock(command, false); 
-    } else if (strstr(command, "BLOCK") != NULL && client__check_login("BLOCK")) {
+         } else {
+            printf("[UNBLOCK:ERROR]\n");
+            printf("[UNBLOCK:END]\n");
+        }
+    } else if (strstr(command, "BLOCK") != NULL) {
+                if (localhost->is_logged_in) {
+
         client__block_or_unblock(command, true); 
-    } else if (strstr(command, "LOGOUT") != NULL && client__check_login("LOGOUT")) {
+         } else {
+            printf("[BLOCK:ERROR]\n");
+            printf("[BLOCK:END]\n");
+        }
+    } else if (strstr(command, "LOGOUT") != NULL) {
+                if (localhost->is_logged_in) {
+
         client__logout(); 
+         } else {
+            printf("[LOGOUT:ERROR]\n");
+            printf("[LOGOUT:END]\n");
+        }
     } else if (strstr(command, "EXIT") != NULL) {
         client_exit(); 
     } else if (strstr(command, "SENDFILE") != NULL) {
