@@ -876,12 +876,6 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
     }
 }
 
-void client__logout() {
-    // destroy server info
-    localhost->is_logged_in = false;
-   
-    host__send_command(server->fd, "LOGOUT");
-}
 
 void client_exit() {
     host__send_command(server->fd, "EXIT");
@@ -1051,14 +1045,13 @@ void server__handle_logout(int requesting_client_fd) {
     struct host *temp = clients;
     while(temp!=NULL) {
         if (temp->fd == requesting_client_fd) {
+            host__send_command(requesting_client_fd, "SUCCESSLOGOUT\n"); 
             temp->is_logged_in = false;
             break;
         }
         temp = temp->next_host;
     }
-    if (temp!=NULL) {
-        host__send_command(requesting_client_fd, "SUCCESSLOGOUT\n"); 
-    } else {
+    if (temp==NULL) {
         host__send_command(requesting_client_fd, "ERRORLOGOUT\n");
     }
 }
@@ -1163,6 +1156,7 @@ void client__execute_command(char command[]) {
         cse4589_print_and_log("[LOGIN:ERROR]\n");  
         cse4589_print_and_log("[LOGIN:END]\n");
     } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
+        localhost->is_logged_in = false;
         cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
         cse4589_print_and_log("[LOGOUT:END]\n");
     } else if (strstr(command, "ERRORLOGOUT") != NULL) {
@@ -1238,7 +1232,7 @@ void client__execute_command(char command[]) {
         }
     } else if (strstr(command, "LOGOUT") != NULL) {
         if (localhost->is_logged_in) {
-            client__logout(); 
+            host__send_command(server->fd, "LOGOUT");
         } else {
            cse4589_print_and_log("[LOGOUT:ERROR]\n");
            cse4589_print_and_log("[LOGOUT:END]\n");
