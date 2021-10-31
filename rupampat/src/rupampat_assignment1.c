@@ -787,8 +787,8 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
             localhost->blocked = new_blocked_client;
         }
         host__send_command(server->fd, command);
-     cse4589_print_and_log("[BLOCK:SUCCESS]\n");  
-     cse4589_print_and_log("[BLOCK:END]\n");
+        cse4589_print_and_log("[BLOCK:SUCCESS]\n");  
+        cse4589_print_and_log("[BLOCK:END]\n");
     } else if (blocked_client != NULL && blocked_client_2 != NULL && !is_a_block) {
         struct host *temp_blocked = localhost->blocked;
         if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
@@ -980,7 +980,8 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     while(temp!=NULL) {
         if (strstr(client_ip, temp->ip_addr) != NULL) {
             to_client = temp;
-        } else if (requesting_client_fd == temp->fd) {
+        } 
+        if (requesting_client_fd == temp->fd) {
             from_client = temp;
         }
         temp = temp->next_host;
@@ -1103,14 +1104,29 @@ void server__execute_command(char command[], int requesting_client_fd) {
         server__handle_login(client_ip, client_port, client_hostname, requesting_client_fd);
     } else if (strstr(command, "BROADCAST") != NULL) {
         char message[MAXDATASIZE];
-        sscanf(command, "BROADCAST %[^\n]", message);
+        int cmdi = 10;
+        int msgi = 0;
+        while(command[cmdi]!='\0') {
+            message[msgi] = command[cmdi];
+            cmdi+=1;
+            msgi+=1;
+        }
+        message[msgi-1]='\0';
         server__broadcast(message, requesting_client_fd); 
     } else if (strstr(command, "REFRESH") != NULL) {
         server__handle_refresh(requesting_client_fd);
     } else if (strstr(command, "SEND") != NULL) {
-        char client_ip[MAXDATASIZE], msg[MAXDATASIZE];
-        sscanf(command, "SEND %s %[^\n]", client_ip, msg);
-        server__handle_send(client_ip, msg, requesting_client_fd);
+        char client_ip[MAXDATASIZE], message[MAXDATASIZE];
+        sscanf(command, "SEND %s", client_ip);
+        int cmdi = 6 + strlen(client_ip);
+        int msgi = 0;
+        while(command[cmdi]!='\0') {
+            message[msgi] = command[cmdi];
+            cmdi+=1;
+            msgi+=1;
+        }
+        message[msgi-1]='\0';
+        server__handle_send(client_ip, message, requesting_client_fd);
     } else if (strstr(command, "UNBLOCK") != NULL) {
         server__block_or_unblock(command, false, requesting_client_fd); 
     } else if (strstr(command, "BLOCK") != NULL) {
@@ -1138,9 +1154,17 @@ void client__execute_command(char command[]) {
     } else if (strstr(command, "SEND") != NULL) {
         client__send(command);
     } else if (strstr(command, "RECEIVE") != NULL) {
-        char client_ip[MAXDATASIZE], msg[MAXDATASIZE];
-        sscanf(command, "RECEIVE %s %[^\n]\n", client_ip, msg);
-        client__handle_receive(client_ip, msg);
+        char client_ip[MAXDATASIZE], message[MAXDATASIZE];
+        sscanf(command, "RECEIVE %s", client_ip);
+        int cmdi = 9 + strlen(client_ip);
+        int msgi = 0;
+        while(command[cmdi]!='\0') {
+            message[msgi] = command[cmdi];
+            cmdi+=1;
+            msgi+=1;
+        }
+        message[msgi-1]='\0';
+        client__handle_receive(client_ip, message);
     } else if (strstr(command, "BROADCAST") != NULL) {
         host__send_command(server->fd, command); 
     } else if (strstr(command, "UNBLOCK") != NULL) {
