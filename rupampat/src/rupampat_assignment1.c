@@ -570,7 +570,7 @@ void client__login(char server_ip[], char server_port[]) {
     socklen_t addrlen = sizeof new_peer_addr;
     
     // main loop
-    while(localhost->is_logged_in) {
+    // while(localhost->is_logged_in) {
         read_fds = master;              // make a copy of master set
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
             // changePrint("DONOTLOG: Could not select()");
@@ -626,7 +626,7 @@ void client__login(char server_ip[], char server_port[]) {
         }
 
         fflush(stdout);
-    }
+    // }
     
     return;
     
