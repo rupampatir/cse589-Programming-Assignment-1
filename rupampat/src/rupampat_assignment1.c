@@ -690,6 +690,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
     }
     struct host *to_client = clients;
     int id = 1;
+    from_client->num_msg_sent++;
     while(to_client!=NULL) {
         if (to_client->fd == requesting_client_fd) {
             to_client = to_client->next_host;
@@ -715,7 +716,6 @@ void server__broadcast(char msg[], int requesting_client_fd) {
         }
 
         char receive[MAXDATASIZE*3];
-        from_client->num_msg_sent++;
         to_client->num_msg_rcv++;
         if (to_client->is_logged_in) {
             sprintf(receive, "RECEIVE %s %s\n", from_client->ip_addr, msg);
@@ -738,9 +738,9 @@ void server__broadcast(char msg[], int requesting_client_fd) {
         to_client = to_client->next_host;
     }
     
- cse4589_print_and_log("[RELAYED:SUCCESS]\n"); 
- cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client->ip_addr, msg);
- cse4589_print_and_log("[RELAYED:END]\n");
+    cse4589_print_and_log("[RELAYED:SUCCESS]\n"); 
+    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client->ip_addr, msg);
+    cse4589_print_and_log("[RELAYED:END]\n");
 }
 
 void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
@@ -945,12 +945,13 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
         char receive[MAXDATASIZE*3];
 
         while(temp_message!= NULL) {
+            requesting_client->num_msg_rcv++;
             sprintf(receive, "RECEIVE %s %s\n", temp_message->from_client->ip_addr, temp_message->text);
             strcat(client_return_msg, receive);
             if (!temp_message->is_broadcast) {
-             cse4589_print_and_log("[EVENT:SUCCESS]\n");  
-             cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
-             cse4589_print_and_log("[EVENT:END]\n");
+                cse4589_print_and_log("[EVENT:SUCCESS]\n");  
+                cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
+                cse4589_print_and_log("[EVENT:END]\n");
             }
             temp_message = temp_message->next_message;
         }
@@ -992,7 +993,6 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     }
 
     from_client->num_msg_sent++;
-    to_client->num_msg_rcv++;
 
     if (to_client->is_logged_in) {
         // CHECK IF SENDER IS BLOCKED (FROM IS BLOCKED BY TO)
@@ -1012,13 +1012,14 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         if (is_blocked) {
             return;
         }
+        to_client->num_msg_rcv++;
         sprintf(receive, "RECEIVE %s %s\n", from_client->ip_addr, msg);
         host__send_command(to_client->fd, receive);
 
         // TODO: CHECK IF THIS NEEDS TO BE SENT WHEN BLOCKED
-     cse4589_print_and_log("[EVENT:SUCCESS]\n");  
-     cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
-     cse4589_print_and_log("[EVENT:END]\n");
+        cse4589_print_and_log("[EVENT:SUCCESS]\n");  
+        cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
+        cse4589_print_and_log("[EVENT:END]\n");
     } else {                        
         struct message *new_message = malloc(sizeof(struct message));
         memcpy(new_message->text, msg, sizeof(new_message->text));
@@ -1073,8 +1074,8 @@ void server__handle_exit(int requesting_client_fd) {
 
 void client__send(char command[MAXDATASIZEBACKGROUND]) {
     host__send_command(server->fd, command); 
- cse4589_print_and_log("[SEND:SUCCESS]\n");  
- cse4589_print_and_log("[SEND:END]\n");
+    cse4589_print_and_log("[SEND:SUCCESS]\n");  
+    cse4589_print_and_log("[SEND:END]\n");
 }
 
 void common__execute_command(char command[], int requesting_client_fd) {
