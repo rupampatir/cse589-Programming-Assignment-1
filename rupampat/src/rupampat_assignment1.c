@@ -1127,14 +1127,14 @@ void common__execute_command(char command[], int requesting_client_fd) {
         host__print_ip_address();
     } else if (strstr(command, "PORT") != NULL) {
         host__print_port();
-    } else if (strstr(command, "LIST") != NULL) {
-        host__print_list_of_clients();
-    }
+    } 
     fflush(stdout);
 }
 
 void server__execute_command(char command[], int requesting_client_fd) {
-    if (strstr(command, "STATISTICS") != NULL) {
+    if (strstr(command, "LIST") != NULL) {
+        host__print_list_of_clients();
+    } else if (strstr(command, "STATISTICS") != NULL) {
         server__print_statistics();
     } else if (strstr(command, "BLOCKED") != NULL) {
         char client_ip[MAXDATASIZE];
@@ -1182,7 +1182,14 @@ void server__execute_command(char command[], int requesting_client_fd) {
 }
 
 void client__execute_command(char command[]) {
-    if (strstr(command, "SUCCESSLOGIN") != NULL) {
+    if (strstr(command, "LIST") != NULL) {
+        if (localhost->is_logged_in) {
+            host__print_list_of_clients();
+         } else {
+           cse4589_print_and_log("[LIST:ERROR]\n");
+           cse4589_print_and_log("[LIST:END]\n");
+        }
+    } else if (strstr(command, "SUCCESSLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:SUCCESS]\n");  
         cse4589_print_and_log("[LOGIN:END]\n");
     } else if (strstr(command, "ERRORLOGIN") != NULL) {
