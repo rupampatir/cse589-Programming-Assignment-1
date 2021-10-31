@@ -1056,7 +1056,11 @@ void server__handle_logout(int requesting_client_fd) {
         }
         temp = temp->next_host;
     }
-    host__send_command(requesting_client_fd, "SUCCESSLOGOUT"); 
+    if (temp!=NULL) {
+        host__send_command(requesting_client_fd, "SUCCESSLOGOUT"); 
+    } else {
+        host__send_command(requesting_client_fd, "ERRORLOGOUT");
+    }
 }
 
 void client__handle_receive(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE]) {
@@ -1152,6 +1156,9 @@ void server__execute_command(char command[], int requesting_client_fd) {
 void client__execute_command(char command[]) {
     if (strstr(command, "SUCCESSLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:SUCCESS]\n");  
+        cse4589_print_and_log("[LOGIN:END]\n");
+    } else if (strstr(command, "ERRORLOGIN") != NULL) {
+        cse4589_print_and_log("[LOGIN:ERROR]\n");  
         cse4589_print_and_log("[LOGIN:END]\n");
     } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
         cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
