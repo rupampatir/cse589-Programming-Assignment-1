@@ -743,7 +743,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
    cse4589_print_and_log("[RELAYED:SUCCESS]\n"); 
    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client->ip_addr, msg);
    cse4589_print_and_log("[RELAYED:END]\n");
-   host__send_command(from_client->fd, "SUCCESSBROADCAST");
+   host__send_command(from_client->fd, "SUCCESSBROADCAST\n");
 }
 
 void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
@@ -953,7 +953,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
                cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
                cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
                cse4589_print_and_log("[RELAYED:END]\n");
-               host__send_command(temp_message->from_client->fd, "SUCCESSSEND"); //CHECK THIS WOLOLO
+               host__send_command(temp_message->from_client->fd, "SUCCESSSEND\n\n"); //CHECK THIS WOLOLO
             }
             temp_message = temp_message->next_message;
         }
@@ -1027,7 +1027,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
        cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
        cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
        cse4589_print_and_log("[RELAYED:END]\n");
-       host__send_command(from_client->fd, "SUCCESSSEND");
+       host__send_command(from_client->fd, "SUCCESSSEND\n");
     } else {                        
         struct message *new_message = malloc(sizeof(struct message));
         memcpy(new_message->text, msg, sizeof(new_message->text));
@@ -1057,9 +1057,9 @@ void server__handle_logout(int requesting_client_fd) {
         temp = temp->next_host;
     }
     if (temp!=NULL) {
-        host__send_command(requesting_client_fd, "SUCCESSLOGOUT"); 
+        host__send_command(requesting_client_fd, "SUCCESSLOGOUT\n"); 
     } else {
-        host__send_command(requesting_client_fd, "ERRORLOGOUT");
+        host__send_command(requesting_client_fd, "ERRORLOGOUT\n");
     }
 }
 
@@ -1160,7 +1160,7 @@ void client__execute_command(char command[]) {
     } else if (strstr(command, "ERRORLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:ERROR]\n");  
         cse4589_print_and_log("[LOGIN:END]\n");
-    } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
+    } else if (strstr(command, "SUCCESSLOGOUT\n") != NULL) {
         cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
         cse4589_print_and_log("[LOGOUT:END]\n");
     } else if (strstr(command, "ERRORLOGOUT") != NULL) {
