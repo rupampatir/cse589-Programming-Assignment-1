@@ -39,8 +39,8 @@
 #include "../include/global.h"
 #include "../include/logger.h"
 
-#define MAXDATASIZE 256
-#define MAXDATASIZEBACKGROUND 3000
+#define MAXDATASIZE 500
+#define MAXDATASIZEBACKGROUND 6000
 #define STDIN 0
 
 struct message {
@@ -1162,19 +1162,18 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[REFRESH:END]\n");
         }
     } else if (strstr(command, "SENDFILE") != NULL) {
-                if (localhost->is_logged_in) {
-char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
-        sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
-        client__P2P_file_transfer(peer_ip, file_name);
-         } else {
+        if (localhost->is_logged_in) {
+            char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
+            sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
+            client__P2P_file_transfer(peer_ip, file_name);
+        } else {
            cse4589_print_and_log("[SENDFILE:ERROR]\n");
            cse4589_print_and_log("[SENDFILE:END]\n");
         }
     } else if (strstr(command, "SEND") != NULL ) {
-                if (localhost->is_logged_in) {
-
-        client__send(command);
-         } else {
+        if (localhost->is_logged_in) {
+            client__send(command);
+        } else {
            cse4589_print_and_log("[SEND:ERROR]\n");
            cse4589_print_and_log("[SEND:END]\n");
         }
@@ -1192,7 +1191,7 @@ char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
         client__handle_receive(client_ip, message);
     } else if (strstr(command, "BROADCAST") != NULL ) {
         if (localhost->is_logged_in) {
-        host__send_command(server->fd, command); 
+            host__send_command(server->fd, command); 
            cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
            cse4589_print_and_log("[BROADCAST:END]\n");
          } else {
@@ -1200,26 +1199,23 @@ char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
            cse4589_print_and_log("[BROADCAST:END]\n");
         }
     } else if (strstr(command, "UNBLOCK") != NULL ) {
-                if (localhost->is_logged_in) {
-
-        client__block_or_unblock(command, false); 
+        if (localhost->is_logged_in) {
+            client__block_or_unblock(command, false); 
          } else {
            cse4589_print_and_log("[UNBLOCK:ERROR]\n");
            cse4589_print_and_log("[UNBLOCK:END]\n");
         }
     } else if (strstr(command, "BLOCK") != NULL) {
-                if (localhost->is_logged_in) {
-
-        client__block_or_unblock(command, true); 
+        if (localhost->is_logged_in) {
+            client__block_or_unblock(command, true); 
          } else {
-           cse4589_print_and_log("[BLOCK:ERROR]\n");
-           cse4589_print_and_log("[BLOCK:END]\n");
+            cse4589_print_and_log("[BLOCK:ERROR]\n");
+            cse4589_print_and_log("[BLOCK:END]\n");
         }
     } else if (strstr(command, "LOGOUT") != NULL) {
-                if (localhost->is_logged_in) {
-
-        client__logout(); 
-         } else {
+        if (localhost->is_logged_in) {
+            client__logout(); 
+        } else {
            cse4589_print_and_log("[LOGOUT:ERROR]\n");
            cse4589_print_and_log("[LOGOUT:END]\n");
         }
