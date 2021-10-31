@@ -743,7 +743,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
    cse4589_print_and_log("[RELAYED:SUCCESS]\n"); 
    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client->ip_addr, msg);
    cse4589_print_and_log("[RELAYED:END]\n");
-   host__send_command(from_client->fd, "SUCCESSBROADCAST\n");
+   host__send_command(from_client->fd, "SUCCESSBROADCAST \n");
 }
 
 void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
@@ -1195,9 +1195,9 @@ void client__execute_command(char command[]) {
     } else if (strstr(command, "ERRORLOGOUT") != NULL) {
         cse4589_print_and_log("[LOGOUT:ERROR]\n");  
         cse4589_print_and_log("[LOGOUT:END]\n");
-    } else if (strstr(command, "SUCCESSBROADCAST") != NULL) {
-        // cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
-        // cse4589_print_and_log("[BROADCAST:END]\n");
+    } else if (strstr(command, "SUCCESSBROADCAST ") != NULL) {
+        cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
+        cse4589_print_and_log("[BROADCAST:END]\n");
     } else if (strstr(command, "SUCCESSUNBLOCK") != NULL) {
         cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");  
         cse4589_print_and_log("[UNBLOCK:END]\n");
