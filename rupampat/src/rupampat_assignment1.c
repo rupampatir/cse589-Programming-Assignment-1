@@ -797,7 +797,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
         } else {
             struct host *previous = temp_blocked;
             while(temp_blocked!=NULL) {
-                if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
+                if (strstr(temp_blocked->ip_addr, blocked_client->ip_addr) != NULL) {
                     previous->next_host = temp_blocked->next_host;
                     break;
                 }
@@ -866,12 +866,12 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
             host__send_command(requesting_client_fd, "SUCCESSBLOCK\n");
         } else {
             struct host *temp_blocked = requesting_client->blocked;
-            if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
+            if (strstr(temp_blocked->ip_addr, blocked_client->ip_addr) != NULL) {
                 requesting_client->blocked = requesting_client->blocked->next_host;
             } else {
                 struct host *previous = temp_blocked;
                 while(temp_blocked!=NULL) {
-                    if (strstr(blocked_client->ip_addr, temp_blocked->ip_addr) != NULL) {
+                    if (strstr(temp_blocked->ip_addr, blocked_client->ip_addr) != NULL) {
                         previous->next_host = temp_blocked->next_host;
                         break;
                     }
