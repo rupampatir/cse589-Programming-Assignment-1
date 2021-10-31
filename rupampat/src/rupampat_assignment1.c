@@ -1158,13 +1158,13 @@ void client__execute_command(char command[]) {
         client__login(server_ip, server_port);
     } else if (strstr(command, "REFRESHRESPONSE") != NULL) {
         client__refresh_client_list(command);
-    } else if (strstr(command, "REFRESH") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "REFRESH") != NULL && client__check_login("REFRESH")) {
         host__send_command(server->fd, "REFRESH");
-    } else if (strstr(command, "SENDFILE") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "SENDFILE") != NULL && client__check_login("SENDFILE")) {
         char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
         sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
         client__P2P_file_transfer(peer_ip, file_name);
-    } else if (strstr(command, "SEND") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "SEND") != NULL && client__check_login("SEND")) {
         client__send(command);
     } else if (strstr(command, "RECEIVE") != NULL) {
         char client_ip[MAXDATASIZE], message[MAXDATASIZE];
@@ -1178,13 +1178,13 @@ void client__execute_command(char command[]) {
         }
         message[msgi-1]='\0';
         client__handle_receive(client_ip, message);
-    } else if (strstr(command, "BROADCAST") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "BROADCAST") != NULL && client__check_login("BROADCAST")) {
         host__send_command(server->fd, command); 
-    } else if (strstr(command, "UNBLOCK") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "UNBLOCK") != NULL && client__check_login("UNBLOCK")) {
         client__block_or_unblock(command, false); 
-    } else if (strstr(command, "BLOCK") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "BLOCK") != NULL && client__check_login("BLOCK")) {
         client__block_or_unblock(command, true); 
-    } else if (strstr(command, "LOGOUT") != NULL && client__check_login(command)) {
+    } else if (strstr(command, "LOGOUT") != NULL && client__check_login("LOGOUT")) {
         client__logout(); 
     } else if (strstr(command, "EXIT") != NULL) {
         client_exit(); 
