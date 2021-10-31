@@ -876,15 +876,15 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
 void client__logout() {
     // destroy server info
     localhost->is_logged_in = false;
- cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
- cse4589_print_and_log("[LOGOUT:END]\n");
+    cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
+    cse4589_print_and_log("[LOGOUT:END]\n");
     host__send_command(server->fd, "LOGOUT");
 }
 
 void client_exit() {
     host__send_command(server->fd, "EXIT");
- cse4589_print_and_log("[EXIT:SUCCESS]\n");  
- cse4589_print_and_log("[EXIT:END]\n");
+    cse4589_print_and_log("[EXIT:SUCCESS]\n");  
+    cse4589_print_and_log("[EXIT:END]\n");
     exit(0);
 }
 
@@ -949,9 +949,9 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             sprintf(receive, "RECEIVE %s %s\n", temp_message->from_client->ip_addr, temp_message->text);
             strcat(client_return_msg, receive);
             if (!temp_message->is_broadcast) {
-                cse4589_print_and_log("[EVENT:SUCCESS]\n");  
+                cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
                 cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
-                cse4589_print_and_log("[EVENT:END]\n");
+                cse4589_print_and_log("[RELAYED:END]\n");
             }
             temp_message = temp_message->next_message;
         }
@@ -988,8 +988,8 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
     }
     if (to_client == NULL) {
         // TODO: CHECK IF THIS IS REQUIRED
-     cse4589_print_and_log("[EVENT:ERROR]\n");  
-     cse4589_print_and_log("[EVENT:END]\n");
+     cse4589_print_and_log("[RELAYED:ERROR]\n");  
+     cse4589_print_and_log("[RELAYED:END]\n");
         return;
     }
 
@@ -1018,9 +1018,9 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         host__send_command(to_client->fd, receive);
 
         // TODO: CHECK IF THIS NEEDS TO BE SENT WHEN BLOCKED
-        cse4589_print_and_log("[EVENT:SUCCESS]\n");  
+        cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
         cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
-        cse4589_print_and_log("[EVENT:END]\n");
+        cse4589_print_and_log("[RELAYED:END]\n");
     } else {                        
         struct message *new_message = malloc(sizeof(struct message));
         memcpy(new_message->text, msg, sizeof(new_message->text));
