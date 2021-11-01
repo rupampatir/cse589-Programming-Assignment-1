@@ -315,8 +315,10 @@ void host__print_list_of_clients() {
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-       cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
-        id = id + 1;
+         if (temp->is_logged_in || !localhost->is_server) {
+            cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
+            id = id + 1;
+        }
         temp = temp->next_host;
     }
     
