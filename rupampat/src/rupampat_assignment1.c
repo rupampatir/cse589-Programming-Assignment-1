@@ -1313,7 +1313,7 @@ void client__execute_command(char command[]) {
     }
   } else if (strstr(command, "RECEIVE") != NULL) {
     char client_ip[MAXDATASIZE], message[MAXDATASIZE];
-    int cmdi = 8;
+    int cmdi = 9;
     int ipi = 0;
     while (command[cmdi] != ' ' && ipi < 256) {
       client_ip[ipi] = command[cmdi];
