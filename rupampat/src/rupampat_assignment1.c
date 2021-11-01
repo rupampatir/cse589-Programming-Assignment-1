@@ -316,7 +316,7 @@ void host__print_list_of_clients() {
     int id = 1;
     while(temp!=NULL) {
         // SUSPICIOUS FOR REFRESH
-        if ((localhost->is_server && temp->is_logged_in) || !localhost->is_server) {
+        if (temp->is_logged_in) {
             cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
             id = id + 1;
         }
@@ -663,6 +663,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
                 memcpy(new_client->port_num, client_port, sizeof(new_client->port_num));
                 memcpy(new_client->ip_addr, client_ip, sizeof(new_client->ip_addr));
                 memcpy(new_client->hostname, client_hostname, sizeof(new_client->hostname));
+                new_client->is_logged_in = true;
                 clients->next_host = new_client;
                 clients = clients->next_host;
             }
