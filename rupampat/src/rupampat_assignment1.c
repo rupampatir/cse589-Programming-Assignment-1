@@ -1089,32 +1089,32 @@ void client__print_success_login() {
 
 void server__handle_exit(int requesting_client_fd) {
     struct host *temp = clients;
-        if (temp->fd == requesting_client_fd) {
-            clients = clients->next_host;
-        } else {
-            struct host *previous = temp;
-            while(temp!=NULL) {
-                if (temp->fd == requesting_client_fd) {
-                    previous->next_host = temp->next_host;
-                    temp = temp->next_host;
-                    continue;
-                }
-                struct host *temp_blocked = temp->blocked;
-                if (temp_blocked->fd == requesting_client_fd) {
-                    temp->blocked = temp->blocked->next_host;
-                } else {
-                    struct host *previous_blocked = temp_blocked;
-                    while(temp_blocked!=NULL) {
-                        if (temp_blocked->fd == requesting_client_fd) {
-                            previous_blocked->next_host = temp_blocked->next_host;
-                            break;
-                        }
-                        temp_blocked = temp_blocked->next_host;
-                    }
-                }
+    if (temp->fd == requesting_client_fd) {
+        clients = clients->next_host;
+    } else {
+        struct host *previous = temp;
+        while(temp!=NULL) {
+            if (temp->fd == requesting_client_fd) {
+                previous->next_host = temp->next_host;
                 temp = temp->next_host;
+                break;
             }
+            // struct host *temp_blocked = temp->blocked;
+            // if (temp_blocked->fd == requesting_client_fd) {
+            //     temp->blocked = temp->blocked->next_host;
+            // } else {
+            //     struct host *previous_blocked = temp_blocked;
+            //     while(temp_blocked!=NULL) {
+            //         if (temp_blocked->fd == requesting_client_fd) {
+            //             previous_blocked->next_host = temp_blocked->next_host;
+            //             break;
+            //         }
+            //         temp_blocked = temp_blocked->next_host;
+            //     }
+            // }
+            temp = temp->next_host;
         }
+    }
 }
 
 void client__send(char command[MAXDATASIZEBACKGROUND]) {
