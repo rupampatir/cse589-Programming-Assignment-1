@@ -40,7 +40,7 @@
 #include "../include/logger.h"
 
 #define MAXDATASIZE 500
-#define MAXDATASIZEBACKGROUND 500*120
+#define MAXDATASIZEBACKGROUND 6000
 #define STDIN 0
 
 struct message {
