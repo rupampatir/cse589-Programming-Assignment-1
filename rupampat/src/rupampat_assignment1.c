@@ -710,8 +710,8 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
     clients = head -> next_host;
   }
   if (is_refresh) {
-    // cse4589_print_and_log("[REFRESH:SUCCESS]\n");
-    // cse4589_print_and_log("[REFRESH:END]\n");
+    cse4589_print_and_log("[REFRESH:SUCCESS]\n");
+    cse4589_print_and_log("[REFRESH:END]\n");
   } else {
     client__execute_command("SUCCESSLOGIN");
   }
