@@ -40,7 +40,7 @@
 #include "../include/logger.h"
 
 #define MAXDATASIZE 500
-#define MAXDATASIZEBACKGROUND 6000
+#define MAXDATASIZEBACKGROUND 500*120
 #define STDIN 0
 
 struct message {
@@ -315,8 +315,11 @@ void host__print_list_of_clients() {
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-        cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
-        id = id + 1;
+        // SUSPICIOUS FOR REFRESH
+        if (temp->is_logged_in || !localhost->is_server) {
+            cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
+            id = id + 1;
+        }
         temp = temp->next_host;
     }
     
@@ -666,8 +669,8 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         }
         clients = head->next_host;
         if (is_refresh) {
-        //    cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
-        //    cse4589_print_and_log("[REFRESH:END]\n");
+            cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
+            cse4589_print_and_log("[REFRESH:END]\n");
         } else {
             client__execute_command("SUCCESSLOGIN");
         }
@@ -943,11 +946,11 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
 
         temp = clients;
         while(temp!=NULL) {
-            // if (temp->is_logged_in) {
+            if (temp->is_logged_in) {
                 char clientString[MAXDATASIZEBACKGROUND];
                 sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
                 strcat(client_return_msg, clientString);
-            // }
+            }
             temp = temp->next_host;
         }
 
@@ -976,11 +979,11 @@ void server__handle_refresh(int requesting_client_fd) {
         char clientListString[MAXDATASIZEBACKGROUND] = "REFRESHRESPONSE NOTFIRST\n";                
         struct host *temp = clients;
         while(temp!=NULL) {
-            // if (temp->is_logged_in) {
+            if (temp->is_logged_in) {
                 char clientString[MAXDATASIZEBACKGROUND];
                 sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
                 strcat(clientListString, clientString);
-            // }
+            }
             temp = temp->next_host;
         }
         // changePrint("%d, %s",requesting_client_fd, clientListString);
