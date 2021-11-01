@@ -677,47 +677,62 @@ void client__login(char server_ip[], char server_port[]) {
 }
 
 void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
+    char *received = strstr(clientListString, "RECEIVE");
+    int rcvi=received - clientListString -1, cmdi=0;
+    char command[MAXDATASIZE];
+    int blank_count=0;
+    while(received!=NULL && rcvi<strlen(clientListString)) {
+        if (clientListString[rcvi] == ' ')
+            blank_count++;
+        else 
+            blank_count = 0;
+        command[cmdi] = clientListString[rcvi];                    
+        if (blank_count == 4) {
+            command[cmdi-3] = '\0'; 
+            strcat(command, "\n");
+            client__execute_command(command);
+            cmdi=0;
+        }
+        cmdi++;
+        rcvi++;
+    }
     char newLine[MAXDATASIZE];
     bool is_refresh = false;
-    int read;
     clients = malloc(sizeof(struct host));
     struct host *head = clients;
     const char delimmiter[2] = "\n";
-    char *token = strtok(clientListString, delimmiter);
+    char *clientListStringCopy = clientListString;
+    char *token = strtok(clientListStringCopy, delimmiter);
     if (strstr(token, "NOTFIRST")) {
         is_refresh = true;
     } 
     if (token != NULL) {
         token = strtok(NULL, delimmiter);
-        char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
+        char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE];
         while (token != NULL) {
-            if (strstr(token, "RECEIVE") != NULL) {
-                sscanf(token, "%[^\n]", command);
-                token = strtok(NULL, delimmiter);
-                strcat(command, "\n");
-                client__execute_command(command);
-            } else {
-                struct host *new_client = malloc(sizeof(struct host));
-                sscanf(token, "%s %s %s\n", client_ip, client_port, client_hostname);
-                token = strtok(NULL, delimmiter);
-                clientListString += read;
-                memcpy(new_client->port_num, client_port, sizeof(new_client->port_num));
-                memcpy(new_client->ip_addr, client_ip, sizeof(new_client->ip_addr));
-                memcpy(new_client->hostname, client_hostname, sizeof(new_client->hostname));
-                new_client->is_logged_in = true;
-                clients->next_host = new_client;
-                clients = clients->next_host;
-            }
+            if (strstr(token, "ENDREFRESH") != NULL) {
+                break;
+            } 
+            struct host *new_client = malloc(sizeof(struct host));
+            sscanf(token, "%s %s %s\n", client_ip, client_port, client_hostname);
+            token = strtok(NULL, delimmiter);
+            memcpy(new_client->port_num, client_port, sizeof(new_client->port_num));
+            memcpy(new_client->ip_addr, client_ip, sizeof(new_client->ip_addr));
+            memcpy(new_client->hostname, client_hostname, sizeof(new_client->hostname));
+            new_client->is_logged_in = true;
+            clients->next_host = new_client;
+            clients = clients->next_host;
         }
         clients = head->next_host;
-        if (is_refresh) {
-            cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
-            fflush(stdout);
-            cse4589_print_and_log("[REFRESH:END]\n");
-            fflush(stdout);
-        } else {
-            client__execute_command("SUCCESSLOGIN");
-        }
+    }
+   
+    if (is_refresh) {
+        cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
+        fflush(stdout);
+        cse4589_print_and_log("[REFRESH:END]\n");
+        fflush(stdout);
+    } else {
+        client__execute_command("SUCCESSLOGIN");
     }
 }
 
@@ -1008,12 +1023,11 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             temp = temp->next_host;
         }
 
-        
+        strcat(client_return_msg, "ENDREFRESH\n");
         struct message *temp_message = requesting_client->queued_messages;
         char receive[MAXDATASIZE*3];
 
         while(temp_message!= NULL) {
-
             requesting_client->num_msg_rcv++;
             sprintf(receive, "RECEIVE %s %s    ", temp_message->from_client->ip_addr, temp_message->text);
             strcat(client_return_msg, receive);
@@ -1043,7 +1057,7 @@ void server__handle_refresh(int requesting_client_fd) {
             }
             temp = temp->next_host;
         }
-        // changePrint("%d, %s",requesting_client_fd, clientListString);
+        strcat(clientListString, "ENDREFRESH\n");
         host__send_command(requesting_client_fd, clientListString);
 }
 
@@ -1204,19 +1218,19 @@ void common__execute_command(char command[], int requesting_client_fd) {
 }
 
 void server__execute_command(char command[], int requesting_client_fd) {
-    if (strncmp(command, "LIST", 4) == 0) {
+    if (strstr(command, "LIST") != NULL) {
         host__print_list_of_clients();
-    } else if (strncmp(command, "STATISTICS", 10) == 0) {
+    } else if (strstr(command, "STATISTICS") != NULL) {
         server__print_statistics();
-    } else if (strncmp(command, "BLOCKED", 7) == 0) {
+    } else if (strstr(command, "BLOCKED") != NULL) {
         char client_ip[MAXDATASIZE];
         sscanf(command, "BLOCKED %s", client_ip);
         server__print_blocked(client_ip);
-    } else if (strncmp(command, "LOGIN", 5) == 0) {
+    } else if (strstr(command, "LOGIN") != NULL) {
         char client_hostname[MAXDATASIZE], client_port[MAXDATASIZE], client_ip[MAXDATASIZE];
         sscanf(command, "LOGIN %s %s %s", client_ip, client_port, client_hostname);
         server__handle_login(client_ip, client_port, client_hostname, requesting_client_fd);
-    } else if (strncmp(command, "BROADCAST", 9) == 0) {
+    } else if (strstr(command, "BROADCAST") != NULL) {
         char message[MAXDATASIZE];
         int cmdi = 10;
         int msgi = 0;
@@ -1227,9 +1241,9 @@ void server__execute_command(char command[], int requesting_client_fd) {
         }
         message[msgi-1]='\0';
         server__broadcast(message, requesting_client_fd); 
-    } else if (strncmp(command, "REFRESH", 7) == 0) {
+    } else if (strstr(command, "REFRESH") != NULL) {
         server__handle_refresh(requesting_client_fd);
-    } else if (strncmp(command, "SEND", 4) == 0) {
+    } else if (strstr(command, "SEND") != NULL) {
         char client_ip[MAXDATASIZE], message[MAXDATASIZE];
         int cmdi = 5;
         int ipi = 0;
@@ -1238,7 +1252,6 @@ void server__execute_command(char command[], int requesting_client_fd) {
             cmdi+=1;
             ipi+=1;
         }
-        client_ip[ipi]='\0';
         cmdi++;
         int msgi = 0;
         while(command[cmdi]!='\0') {
@@ -1248,20 +1261,20 @@ void server__execute_command(char command[], int requesting_client_fd) {
         }
         message[msgi-1]='\0'; // Remove new line
         server__handle_send(client_ip, message, requesting_client_fd);
-    } else if (strncmp(command, "UNBLOCK", 7) == 0) {
+    } else if (strstr(command, "UNBLOCK") != NULL) {
         server__block_or_unblock(command, false, requesting_client_fd); 
-    } else if (strncmp(command, "BLOCK", 5) == 0) {
+    } else if (strstr(command, "BLOCK") != NULL) {
         server__block_or_unblock(command, true, requesting_client_fd); 
-    } else if (strncmp(command, "LOGOUT", 6) == 0) {
+    } else if (strstr(command, "LOGOUT") != NULL) {
         server__handle_logout(requesting_client_fd);
-    } else if (strncmp(command, "EXIT", 4) == 0) {
+    } else if (strstr(command, "EXIT") != NULL) {
         server__handle_exit(requesting_client_fd);
     }
     fflush(stdout);
 }
 
 void client__execute_command(char command[]) {
-    if (strncmp(command, "LIST", 4) == 0) {
+    if (strstr(command, "LIST") != NULL) {
         if (localhost->is_logged_in) {
             host__print_list_of_clients();
          } else {
@@ -1270,58 +1283,58 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[LIST:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "SUCCESSLOGIN", 12) == 0) {
+    } else if (strstr(command, "SUCCESSLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:SUCCESS]\n");  
         fflush(stdout);
         cse4589_print_and_log("[LOGIN:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "ERRORLOGIN", 10) == 0) {
+    } else if (strstr(command, "ERRORLOGIN") != NULL) {
         cse4589_print_and_log("[LOGIN:ERROR]\n");  
         fflush(stdout);
         cse4589_print_and_log("[LOGIN:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "SUCCESSLOGOUT", 13) == 0) {
+    } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
         localhost->is_logged_in = false;
         cse4589_print_and_log("[LOGOUT:SUCCESS]\n");  
         fflush(stdout);
         cse4589_print_and_log("[LOGOUT:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "ERRORLOGOUT", 11) == 0) {
+    } else if (strstr(command, "ERRORLOGOUT") != NULL) {
         cse4589_print_and_log("[LOGOUT:ERROR]\n");  
         fflush(stdout);
         cse4589_print_and_log("[LOGOUT:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "SUCCESSBROADCAST", 16) == 0) {
+    } else if (strstr(command, "SUCCESSBROADCAST") != NULL) {
         cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
         fflush(stdout);
         cse4589_print_and_log("[BROADCAST:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "SUCCESSUNBLOCK", 14) == 0) {
+    } else if (strstr(command, "SUCCESSUNBLOCK") != NULL) {
         cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");  
         fflush(stdout);
         cse4589_print_and_log("[UNBLOCK:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "SUCCESSBLOCK",12) == 0) {
+    } else if (strstr(command, "SUCCESSBLOCK") != NULL) {
         cse4589_print_and_log("[BLOCK:SUCCESS]\n");  
         fflush(stdout);
         cse4589_print_and_log("[BLOCK:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "ERRORUNBLOCK", 12) == 0) {
+    } else if (strstr(command, "ERRORUNBLOCK") != NULL) {
         cse4589_print_and_log("[UNBLOCK:ERROR]\n");  
         fflush(stdout);
         cse4589_print_and_log("[UNBLOCK:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "ERRORBLOCK", 10) == 0) {
+    } else if (strstr(command, "ERRORBLOCK") != NULL) {
         cse4589_print_and_log("[BLOCK:ERROR]\n");  
         fflush(stdout);
         cse4589_print_and_log("[BLOCK:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "SUCCESSSEND", 11) == 0) {
+    } else if (strstr(command, "SUCCESSSEND") != NULL) {
         cse4589_print_and_log("[SEND:SUCCESS]\n");
         fflush(stdout);
         cse4589_print_and_log("[SEND:END]\n");
         fflush(stdout);
-    } else if (strncmp(command, "LOGIN", 5) == 0) { // takes two arguments server ip and server port
+    } else if (strstr(command, "LOGIN") != NULL) { // takes two arguments server ip and server port
         char server_ip[MAXDATASIZE], server_port[MAXDATASIZE];
         int cmdi = 6;
         int ipi = 0;
@@ -1341,9 +1354,9 @@ void client__execute_command(char command[]) {
         }
         server_port[pi-1]='\0'; // REMOVE THE NEW LINE
         client__login(server_ip, server_port);
-    } else if (strncmp(command, "REFRESHRESPONSE", 15) == 0) {
+    } else if (strstr(command, "REFRESHRESPONSE") != NULL) {
         client__refresh_client_list(command);
-    } else if (strncmp(command, "REFRESH", 7) == 0) {
+    } else if (strstr(command, "REFRESH") != NULL) {
         if (localhost->is_logged_in) {
             host__send_command(server->fd, "REFRESH\n");
         } else {
@@ -1352,7 +1365,7 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[REFRESH:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "SENDFILE", 8) == 0) {
+    } else if (strstr(command, "SENDFILE") != NULL) {
         if (localhost->is_logged_in) {
             // char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
             // sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
@@ -1363,7 +1376,7 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[SENDFILE:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "SEND", 4) == 0 ) {
+    } else if (strstr(command, "SEND") != NULL ) {
         if (localhost->is_logged_in) {
             client__send(command);
         } else {
@@ -1372,9 +1385,9 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[SEND:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "RECEIVE", 7) == 0) {
+    } else if (strstr(command, "RECEIVE") != NULL) {
         char client_ip[MAXDATASIZE], message[MAXDATASIZE];
-        int cmdi = 7;
+        int cmdi = 9;
         int ipi = 0;
         while(command[cmdi]!=' ' && ipi<256) {
             client_ip[ipi] = command[cmdi];
@@ -1392,7 +1405,7 @@ void client__execute_command(char command[]) {
         }
         message[msgi-1]='\0'; // REMOVE THE NEW LINE
         client__handle_receive(client_ip, message);
-    } else if (strncmp(command, "BROADCAST", 9) == 0 ) {
+    } else if (strstr(command, "BROADCAST") != NULL ) {
         if (localhost->is_logged_in) {
             host__send_command(server->fd, command); 
          } else {
@@ -1401,7 +1414,7 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[BROADCAST:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "UNBLOCK", 7) == 0 ) {
+    } else if (strstr(command, "UNBLOCK") != NULL ) {
         if (localhost->is_logged_in) {
             client__block_or_unblock(command, false); 
          } else {
@@ -1410,7 +1423,7 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[UNBLOCK:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "BLOCK", 5) == 0) {
+    } else if (strstr(command, "BLOCK") != NULL) {
         if (localhost->is_logged_in) {
             client__block_or_unblock(command, true); 
          } else {
@@ -1419,7 +1432,7 @@ void client__execute_command(char command[]) {
             cse4589_print_and_log("[BLOCK:END]\n");
             fflush(stdout);
         }
-    } else if (strncmp(command, "LOGOUT", 6) == 0) {
+    } else if (strstr(command, "LOGOUT") != NULL) {
         if (localhost->is_logged_in) {
             host__send_command(server->fd, command);
         } else {
@@ -1428,9 +1441,9 @@ void client__execute_command(char command[]) {
            cse4589_print_and_log("[LOGOUT:END]\n");
            fflush(stdout);
         }
-    } else if (strncmp(command, "EXIT", 4) == 0) {
+    } else if (strstr(command, "EXIT") != NULL) {
         client_exit(); 
-    } else if (strncmp(command, "SENDFILE", 8) == 0) {
+    } else if (strstr(command, "SENDFILE") != NULL) {
         //split the command into the two arguments. may beed to return pointer from strstr
         // client__send(command, command); 
     }
