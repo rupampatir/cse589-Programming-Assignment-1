@@ -662,7 +662,7 @@ void client__login(char server_ip[], char server_port[]) {
 
 void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
   char * received = strstr(clientListString, "RECEIVE");
-  int rcvi = received - clientListString - 1, cmdi = 0;
+  int rcvi = received - clientListString, cmdi = 0;
   char command[MAXDATASIZE];
   int blank_count = 0;
   while (received != NULL && rcvi < strlen(clientListString)) {
