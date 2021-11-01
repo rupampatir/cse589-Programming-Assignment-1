@@ -40,7 +40,7 @@
 #include "../include/logger.h"
 
 #define MAXDATASIZE 500
-#define MAXDATASIZEBACKGROUND 500*120
+#define MAXDATASIZEBACKGROUND 6000
 #define STDIN 0
 
 struct message {
@@ -315,10 +315,8 @@ void host__print_list_of_clients() {
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-         if (temp->is_logged_in || !localhost->is_server) {
-            cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
-            id = id + 1;
-        }
+        cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
+        id = id + 1;
         temp = temp->next_host;
     }
     
@@ -809,7 +807,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
             }
         }
         host__send_command(server->fd, command);
-       
+
     } else {
         if (is_a_block) {
            cse4589_print_and_log("[BLOCK:ERROR]\n");  
@@ -978,11 +976,9 @@ void server__handle_refresh(int requesting_client_fd) {
         char clientListString[MAXDATASIZEBACKGROUND] = "REFRESHRESPONSE NOTFIRST\n";                
         struct host *temp = clients;
         while(temp!=NULL) {
-            // if (temp->is_logged_in) {
-                char clientString[MAXDATASIZE];
+                char clientString[MAXDATASIZEBACKGROUND];
                 sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
                 strcat(clientListString, clientString);
-            // }
             temp = temp->next_host;
         }
         // changePrint("%d, %s",requesting_client_fd, clientListString);
@@ -1003,7 +999,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         }
         temp = temp->next_host;
     }
-    if (to_client == NULL) {
+    if (to_client == NULL || from_client == NULL) {
         // TODO: CHECK IF THIS IS REQUIRED
        cse4589_print_and_log("[RELAYED:ERROR]\n");  
        cse4589_print_and_log("[RELAYED:END]\n");
