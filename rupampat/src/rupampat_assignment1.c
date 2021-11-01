@@ -315,10 +315,8 @@ void host__print_list_of_clients() {
     struct host *temp = clients;
     int id = 1;
     while(temp!=NULL) {
-         if (temp->is_logged_in || !localhost->is_server) {
-            cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
-            id = id + 1;
-        }
+        cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
+        id = id + 1;
         temp = temp->next_host;
     }
     
@@ -649,7 +647,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
         while (token != NULL) {
-            if (strstr(token, "RECEIVE")) {
+            if (strstr(token, "RECEIVE") != NULL) {
                 sscanf(token, "%[^\n]", command);
                 token = strtok(NULL, delimmiter);
                 strcat(command, "\n");
@@ -668,8 +666,8 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         }
         clients = head->next_host;
         if (is_refresh) {
-           cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
-           cse4589_print_and_log("[REFRESH:END]\n");
+        //    cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
+        //    cse4589_print_and_log("[REFRESH:END]\n");
         } else {
             client__execute_command("SUCCESSLOGIN");
         }
@@ -809,7 +807,7 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
             }
         }
         host__send_command(server->fd, command);
-       
+
     } else {
         if (is_a_block) {
            cse4589_print_and_log("[BLOCK:ERROR]\n");  
@@ -1003,7 +1001,7 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         }
         temp = temp->next_host;
     }
-    if (to_client == NULL) {
+    if (to_client == NULL || from_client == NULL) {
         // TODO: CHECK IF THIS IS REQUIRED
        cse4589_print_and_log("[RELAYED:ERROR]\n");  
        cse4589_print_and_log("[RELAYED:END]\n");
