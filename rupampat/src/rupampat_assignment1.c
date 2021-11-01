@@ -633,12 +633,16 @@ void client__login(char server_ip[], char server_port[]) {
 }
 
 void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
-    char first[MAXDATASIZE], newLine[MAXDATASIZE];
+    char newLine[MAXDATASIZE];
+    bool is_refresh = false;
     int read;
     clients = malloc(sizeof(struct host));
     struct host *head = clients;
     const char delimmiter[2] = "\n";
     char *token = strtok(clientListString, delimmiter);
+    if (strstr(token, "NOTFIRST")) {
+        is_refresh = true;
+    } 
     if (token != NULL) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
@@ -661,15 +665,12 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
             }
         }
         clients = head->next_host;
-        if (strstr(first, "NOTFIRST")) {
+        if (is_refresh) {
            cse4589_print_and_log("[REFRESH:SUCCESS]\n");  
            cse4589_print_and_log("[REFRESH:END]\n");
         } else {
             client__execute_command("SUCCESSLOGIN");
         }
-    } else if (strstr(first, "NOTFIRST")) {
-       cse4589_print_and_log("[REFRESH:ERROR]\n");  
-       cse4589_print_and_log("[REFRESH:END]\n");
     }
 }
 
@@ -893,8 +894,8 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
 
 void client_exit() {
     host__send_command(server->fd, "EXIT");
-   cse4589_print_and_log("[EXIT:SUCCESS]\n");  
-   cse4589_print_and_log("[EXIT:END]\n");
+    cse4589_print_and_log("[EXIT:SUCCESS]\n");  
+    cse4589_print_and_log("[EXIT:END]\n");
     exit(0);
 }
 
@@ -938,6 +939,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             }
 
         }
+        requesting_client->is_logged_in = true;
 
         temp = clients;
         while(temp!=NULL) {
@@ -948,7 +950,6 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
             }
             temp = temp->next_host;
         }
-        requesting_client->is_logged_in = true;
 
         
         struct message *temp_message = requesting_client->queued_messages;
@@ -964,7 +965,6 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
                cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
                cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message->from_client->ip_addr, requesting_client->ip_addr, temp_message->text);
                cse4589_print_and_log("[RELAYED:END]\n");
-               host__send_command(temp_message->from_client->fd, "SUCCESSSEND\n"); //CHECK THIS WOLOLO
             }
             temp_message = temp_message->next_message;
         }
@@ -1022,12 +1022,12 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         }
         temp = temp->next_host;
     }
-
+    host__send_command(from_client->fd, "SUCCESSSEND\n");
     if (is_blocked) {
         cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
         cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
         cse4589_print_and_log("[RELAYED:END]\n");
-        host__send_command(from_client->fd, "SUCCESSEND\n");
+        host__send_command(from_client->fd, "SUCCESSSEND\n");
         return;
     }
 
@@ -1037,10 +1037,9 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE] , in
         host__send_command(to_client->fd, receive);
 
         // TODO: CHECK IF THIS NEEDS TO BE SENT WHEN BLOCKED
-       cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
-       cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
-       cse4589_print_and_log("[RELAYED:END]\n");
-       host__send_command(from_client->fd, "SUCCESSSEND\n");
+        cse4589_print_and_log("[RELAYED:SUCCESS]\n");  
+        cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client->ip_addr, to_client->ip_addr, msg);
+        cse4589_print_and_log("[RELAYED:END]\n");
     } else {                        
         struct message *new_message = malloc(sizeof(struct message));
         memcpy(new_message->text, msg, sizeof(new_message->text));
