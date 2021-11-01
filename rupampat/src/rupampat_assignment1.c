@@ -662,7 +662,7 @@ void client__login(char server_ip[], char server_port[]) {
 
 void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
   char * received = strstr(clientListString, "RECEIVE");
-  int rcvi = received - clientListString - 1, cmdi = 0;
+  int rcvi = received - clientListString, cmdi = 0;
   char command[MAXDATASIZE];
   int blank_count = 0;
   while (received != NULL && rcvi < strlen(clientListString)) {
@@ -675,7 +675,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
       command[cmdi - 3] = '\0';
       strcat(command, "\n");
       client__execute_command(command);
-      cmdi = 0;
+      cmdi = -1;
     }
     cmdi++;
     rcvi++;
@@ -685,8 +685,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
   clients = malloc(sizeof(struct host));
   struct host * head = clients;
   const char delimmiter[2] = "\n";
-  char * clientListStringCopy = clientListString;
-  char * token = strtok(clientListStringCopy, delimmiter);
+  char * token = strtok(clientListString, delimmiter);
   if (strstr(token, "NOTFIRST")) {
     is_refresh = true;
   }
@@ -1313,7 +1312,7 @@ void client__execute_command(char command[]) {
     }
   } else if (strstr(command, "RECEIVE") != NULL) {
     char client_ip[MAXDATASIZE], message[MAXDATASIZE];
-    int cmdi = 9;
+    int cmdi = 8;
     int ipi = 0;
     while (command[cmdi] != ' ' && ipi < 256) {
       client_ip[ipi] = command[cmdi];
