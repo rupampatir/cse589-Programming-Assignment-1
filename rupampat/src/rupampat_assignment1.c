@@ -649,7 +649,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
         token = strtok(NULL, delimmiter);
         char client_ip[MAXDATASIZE], client_port[MAXDATASIZE], client_hostname[MAXDATASIZE], command[MAXDATASIZE];
         while (token != NULL) {
-            if (strstr(token, "RECEIVE")) {
+            if (strstr(token, "RECEIVE") != NULL) {
                 sscanf(token, "%[^\n]", command);
                 token = strtok(NULL, delimmiter);
                 strcat(command, "\n");
@@ -979,7 +979,7 @@ void server__handle_refresh(int requesting_client_fd) {
         struct host *temp = clients;
         while(temp!=NULL) {
             // if (temp->is_logged_in) {
-                char clientString[MAXDATASIZEBACKGROUND];
+                char clientString[MAXDATASIZE];
                 sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
                 strcat(clientListString, clientString);
             // }
