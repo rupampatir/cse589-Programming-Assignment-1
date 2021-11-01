@@ -384,7 +384,7 @@ void server__print_blocked(char blocker_ip_addr[MAXDATASIZE]) {
    fflush(stdout);
 }
 
-void client__register_server(char server_ip[], char server_port[]) {
+int client__register_server(char server_ip[], char server_port[]) {
         server = malloc(sizeof(struct host));
         memcpy(server->ip_addr, server_ip, sizeof(server->ip_addr));
         memcpy(server->port_num, server_port, sizeof(server->port_num));
@@ -400,7 +400,7 @@ void client__register_server(char server_ip[], char server_port[]) {
         hints.ai_flags = AI_PASSIVE;
         if (status = getaddrinfo(server->ip_addr, server->port_num, &hints, &server_ai) != 0) {
             // changePrint("DONOTLOG: Could not get addrinfo");
-            exit(EXIT_FAILURE);
+            return 0;
         }
         
         for(temp_ai = server_ai; temp_ai != NULL; temp_ai = temp_ai->ai_next) {
@@ -420,7 +420,7 @@ void client__register_server(char server_ip[], char server_port[]) {
         // exit if could not bind
         if (temp_ai == NULL) {
             // changePrint("DONOTLOG: Could not connect");
-            exit(EXIT_FAILURE);
+            return 0;
         }
         
         server->fd = server_fd;
@@ -432,7 +432,7 @@ void client__register_server(char server_ip[], char server_port[]) {
         struct addrinfo *localhost_ai;
         if (status = getaddrinfo(NULL, localhost->port_num, &hints, &localhost_ai) != 0) {
             // changePrint("DONOTLOG: Could not get addrinfo");
-            exit(EXIT_FAILURE);
+            return 0;
         }
         
         for(temp_ai = localhost_ai; temp_ai != NULL; temp_ai = temp_ai->ai_next) {
@@ -451,18 +451,20 @@ void client__register_server(char server_ip[], char server_port[]) {
         // exit if could not bind
         if (temp_ai == NULL) {
             // changePrint("DONOTLOG: Could not bind");
-            exit(EXIT_FAILURE);
+            return 0;
         }
 
         // listen
         if (listen(listener, 10) == -1) {
             // changePrint("DONOTLOG: Could not listen");
-            exit(EXIT_FAILURE);
+            return 0;
         }
         
         localhost->fd = listener;
 
         freeaddrinfo(localhost_ai);
+
+        return 1;
 }
 
 int client__P2P_file_transfer (char peer_ip[], char file_name[MAXDATASIZE]) {
@@ -548,7 +550,7 @@ void receive_file_from_peer(int peer_fd) {
             break;
         }
         if (strstr(buffer, "FILENAME") != NULL) {
-            sscanf(buffer, "FILENAME %s\n", received_file_name);
+            // sscanf(buffer, "FILENAME %s\n", received_file_name);
         } else {
             FILE *file_pointer = fopen(received_file_name, "w");
             fprintf(file_pointer, "%s", buffer);
@@ -566,8 +568,23 @@ void client__login(char server_ip[], char server_port[]) {
     
     // Register the server if it's their first time. Client, will store,
     // server information
+    if (server_ip == NULL || server_port == NULL) {
+        cse4589_print_and_log("[LOGIN:ERROR]\n"); 
+        cse4589_print_and_log("[LOGIN:END]\n");
+        return;
+    }
     if (server == NULL) {
-        client__register_server(server_ip, server_port);
+        if (!host__check_valid_ip_addr(server_ip) || client__register_server(server_ip, server_port) == 0) {
+            cse4589_print_and_log("[LOGIN:ERROR]\n"); 
+            cse4589_print_and_log("[LOGIN:END]\n");
+            return;
+        }
+    } else {
+        if (strstr(server->ip_addr, server_ip) == NULL || strstr(server->port_num, server_port) == NULL) {
+            cse4589_print_and_log("[LOGIN:ERROR]\n"); 
+            cse4589_print_and_log("[LOGIN:END]\n");
+            return;
+        }
     }
 
     
@@ -1298,7 +1315,23 @@ void client__execute_command(char command[]) {
         fflush(stdout);
     } else if (strstr(command, "LOGIN") != NULL) { // takes two arguments server ip and server port
         char server_ip[MAXDATASIZE], server_port[MAXDATASIZE];
-        sscanf(command, "LOGIN %s %s", server_ip, server_port);
+        int cmdi = 6;
+        int ipi = 0;
+        while(command[cmdi]!=' ' && ipi<256) {
+            server_ip[ipi] = command[cmdi];
+            cmdi+=1;
+            ipi+=1;
+        }
+        server_ip[ipi]='\0';
+        
+        cmdi+=1;
+        int pi = 0;
+        while(command[cmdi]!='\0') {
+            server_port[pi] = command[cmdi];
+            cmdi+=1;
+            pi+=1;
+        }
+        server_port[pi-1]='\0'; // REMOVE THE NEW LINE
         client__login(server_ip, server_port);
     } else if (strstr(command, "REFRESHRESPONSE") != NULL) {
         client__refresh_client_list(command);
@@ -1313,9 +1346,9 @@ void client__execute_command(char command[]) {
         }
     } else if (strstr(command, "SENDFILE") != NULL) {
         if (localhost->is_logged_in) {
-            char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
-            sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
-            client__P2P_file_transfer(peer_ip, file_name);
+            // char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
+            // sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
+            // client__P2P_file_transfer(peer_ip, file_name);
         } else {
            cse4589_print_and_log("[SENDFILE:ERROR]\n");
            fflush(stdout);
@@ -1333,15 +1366,23 @@ void client__execute_command(char command[]) {
         }
     } else if (strstr(command, "RECEIVE") != NULL) {
         char client_ip[MAXDATASIZE], message[MAXDATASIZE];
-        sscanf(command, "RECEIVE %s", client_ip);
-        int cmdi = 9 + strlen(client_ip);
+        int cmdi = 7;
+        int ipi = 0;
+        while(command[cmdi]!=' ' && ipi<256) {
+            client_ip[ipi] = command[cmdi];
+            cmdi+=1;
+            ipi+=1;
+        }
+        client_ip[ipi]='\0';
+        
+        cmdi+=1;
         int msgi = 0;
         while(command[cmdi]!='\0') {
             message[msgi] = command[cmdi];
             cmdi+=1;
             msgi+=1;
         }
-        message[msgi-1]='\0';
+        message[msgi-1]='\0'; // REMOVE THE NEW LINE
         client__handle_receive(client_ip, message);
     } else if (strstr(command, "BROADCAST") != NULL ) {
         if (localhost->is_logged_in) {
