@@ -957,7 +957,7 @@ void server__handle_refresh(int requesting_client_fd) {
         char clientListString[MAXDATASIZEBACKGROUND] = "REFRESHRESPONSE NOTFIRST\n";                
         struct host *temp = clients;
         while(temp!=NULL) {
-                char clientString[MAXDATASIZE];
+                char clientString[MAXDATASIZEBACKGROUND];
                 sprintf(clientString, "%s %s %s\n", temp->ip_addr, temp->port_num, temp->hostname);
                 strcat(clientListString, clientString);
             temp = temp->next_host;
