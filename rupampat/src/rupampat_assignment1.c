@@ -675,7 +675,7 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
       command[cmdi - 3] = '\0';
       strcat(command, "\n");
       client__execute_command(command);
-      cmdi = 0;
+      cmdi = -1;
     }
     cmdi++;
     rcvi++;
