@@ -326,7 +326,7 @@ void host__print_list_of_clients() {
     int id = 1;
     while(temp!=NULL) {
         // SUSPICIOUS FOR REFRESH
-        if (temp->is_logged_in) {
+        if (temp->is_logged_in || temp->is_server) {
             cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp->hostname, temp->ip_addr, (temp->port_num));
             fflush(stdout);
             id = id + 1;
