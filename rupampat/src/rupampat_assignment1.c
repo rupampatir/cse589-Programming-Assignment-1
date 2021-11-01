@@ -710,8 +710,8 @@ void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
     clients = head -> next_host;
   }
   if (is_refresh) {
-    cse4589_print_and_log("[REFRESH:SUCCESS]\n");
-    cse4589_print_and_log("[REFRESH:END]\n");
+    // cse4589_print_and_log("[REFRESH:SUCCESS]\n");
+    // cse4589_print_and_log("[REFRESH:END]\n");
   } else {
     client__execute_command("SUCCESSLOGIN");
   }
@@ -1018,11 +1018,11 @@ void server__handle_refresh(int requesting_client_fd) {
   char clientListString[MAXDATASIZEBACKGROUND] = "REFRESHRESPONSE NOTFIRST\n";
   struct host * temp = clients;
   while (temp != NULL) {
-    // if (temp -> is_logged_in) {
+    if (temp -> is_logged_in) {
       char clientString[MAXDATASIZEBACKGROUND];
       sprintf(clientString, "%s %s %s\n", temp -> ip_addr, temp -> port_num, temp -> hostname);
       strcat(clientListString, clientString);
-    // }
+    }
     temp = temp -> next_host;
   }
   strcat(clientListString, "ENDREFRESH\n");
