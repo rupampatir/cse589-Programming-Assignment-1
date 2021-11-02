@@ -49,11 +49,11 @@
 #include "../include/logger.h"
 
 #define MAXDATASIZE 500
-#define MAXDATASIZEBACKGROUND 6000
+#define MAXDATASIZEBACKGROUND 500 * 120
 #define STDIN 0
 
 struct message {
-  char text[MAXDATASIZE];
+  char text[MAXDATASIZEBACKGROUND];
   struct host * from_client;
   struct message * next_message;
   bool is_broadcast;
@@ -180,7 +180,7 @@ void server__init() {
   int new_client_fd; // newly accept()ed socket descriptor
   struct sockaddr_storage new_client_addr; // client address
   socklen_t addrlen; // address length
-  char data_buffer[MAXDATASIZE]; // buffer for client data
+  char data_buffer[MAXDATASIZEBACKGROUND]; // buffer for client data
   int data_buffer_bytes; // holds number of bytes received and stored in data_buffer
   char newClientIP[INET6_ADDRSTRLEN]; // holds the ip of the new client
   int fd;
@@ -229,9 +229,9 @@ void server__init() {
           fflush(stdout);
         } else if (fd == STDIN) {
           // handle data from standard input
-          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
-          memset(command, '\0', MAXDATASIZE);
-          if (fgets(command, MAXDATASIZE - 1, stdin) == NULL) { // -1 because of new line
+          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
+          memset(command, '\0', MAXDATASIZEBACKGROUND);
+          if (fgets(command, MAXDATASIZEBACKGROUND - 1, stdin) == NULL) { // -1 because of new line
             // changePrint("DONOTLOG: Something went wrong reading stdin");
           } else {
             execute_command(command, fd);
@@ -272,9 +272,9 @@ void server__init() {
 void client__init() {
   while (true) {
     // handle data from standard input
-    char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
-    memset(command, '\0', MAXDATASIZE);
-    if (fgets(command, MAXDATASIZE, stdin) == NULL) {
+    char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
+    memset(command, '\0', MAXDATASIZEBACKGROUND);
+    if (fgets(command, MAXDATASIZEBACKGROUND, stdin) == NULL) {
       // changePrint("DONOTLOG: Something went wrong reading stdin");
     } else {
       execute_command(command, STDIN);
@@ -298,56 +298,56 @@ void host__init(bool is_server, char * port) {
 
 // AUTHOR
 void host__print_author() {
-  cse4589_print_and_log("[AUTHOR:SUCCESS]\n");
-  cse4589_print_and_log("I, rupampat, have read and understood the course academic integrity policy.\n");
-  cse4589_print_and_log("[AUTHOR:END]\n");
+ cse4589_print_and_log("[AUTHOR:SUCCESS]\n");
+ cse4589_print_and_log("I, rupampat, have read and understood the course academic integrity policy.\n");
+ cse4589_print_and_log("[AUTHOR:END]\n");
 }
 
 // IP
 void host__print_ip_address() {
-  cse4589_print_and_log("[IP:SUCCESS]\n");
-  cse4589_print_and_log("IP:%s\n", localhost -> ip_addr);
-  cse4589_print_and_log("[IP:END]\n");
+ cse4589_print_and_log("[IP:SUCCESS]\n");
+ cse4589_print_and_log("IP:%s\n", localhost -> ip_addr);
+ cse4589_print_and_log("[IP:END]\n");
 }
 
 void host__print_port() {
-  cse4589_print_and_log("[PORT:SUCCESS]\n");
-  cse4589_print_and_log("PORT:%s\n", localhost -> port_num);
-  cse4589_print_and_log("[PORT:END]\n");
+ cse4589_print_and_log("[PORT:SUCCESS]\n");
+ cse4589_print_and_log("PORT:%s\n", localhost -> port_num);
+ cse4589_print_and_log("[PORT:END]\n");
 }
 
 void host__print_list_of_clients() {
-  cse4589_print_and_log("[LIST:SUCCESS]\n");
+ cse4589_print_and_log("[LIST:SUCCESS]\n");
 
   struct host * temp = clients;
   int id = 1;
   while (temp != NULL) {
     // SUSPICIOUS FOR REFRESH
     if (temp -> is_logged_in) {
-      cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp -> hostname, temp -> ip_addr, (temp -> port_num));
+     cse4589_print_and_log("%-5d%-35s%-20s%-8s\n", id, temp -> hostname, temp -> ip_addr, (temp -> port_num));
       id = id + 1;
     }
     temp = temp -> next_host;
   }
 
-  cse4589_print_and_log("[LIST:END]\n");
+ cse4589_print_and_log("[LIST:END]\n");
 }
 
 void server__print_statistics() {
-  cse4589_print_and_log("[STATISTICS:SUCCESS]\n");
+ cse4589_print_and_log("[STATISTICS:SUCCESS]\n");
 
   struct host * temp = clients;
   int id = 1;
   while (temp != NULL) {
-    cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", id, temp -> hostname, temp -> num_msg_sent, temp -> num_msg_rcv, temp -> is_logged_in ? "logged-in" : "logged-out");
+   cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", id, temp -> hostname, temp -> num_msg_sent, temp -> num_msg_rcv, temp -> is_logged_in ? "logged-in" : "logged-out");
     id = id + 1;
     temp = temp -> next_host;
   }
 
-  cse4589_print_and_log("[STATISTICS:END]\n");
+ cse4589_print_and_log("[STATISTICS:END]\n");
 }
 
-void server__print_blocked(char blocker_ip_addr[MAXDATASIZE]) {
+void server__print_blocked(char blocker_ip_addr[]) {
   struct host * temp = clients;
   while (temp != NULL) {
     if (strstr(blocker_ip_addr, temp -> ip_addr) != NULL) {
@@ -356,20 +356,20 @@ void server__print_blocked(char blocker_ip_addr[MAXDATASIZE]) {
     temp = temp -> next_host;
   }
   if (host__check_valid_ip_addr(blocker_ip_addr) && temp) {
-    cse4589_print_and_log("[BLOCKED:SUCCESS]\n");
+   cse4589_print_and_log("[BLOCKED:SUCCESS]\n");
     struct host * temp_blocked = clients;
     temp_blocked = temp -> blocked;
     int id = 1;
     while (temp_blocked != NULL) {
-      cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", id, temp_blocked -> hostname, temp_blocked -> ip_addr, atoi(temp_blocked -> port_num));
+     cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", id, temp_blocked -> hostname, temp_blocked -> ip_addr, atoi(temp_blocked -> port_num));
       id = id + 1;
       temp_blocked = temp_blocked -> next_host;
     }
   } else {
-    cse4589_print_and_log("[BLOCKED:ERROR]\n");
+   cse4589_print_and_log("[BLOCKED:ERROR]\n");
   }
 
-  cse4589_print_and_log("[BLOCKED:END]\n");
+ cse4589_print_and_log("[BLOCKED:END]\n");
 }
 
 int client__register_server(char server_ip[], char server_port[]) {
@@ -455,7 +455,7 @@ int client__register_server(char server_ip[], char server_port[]) {
   return 1;
 }
 
-int client__P2P_file_transfer(char peer_ip[], char file_name[MAXDATASIZE]) {
+int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
 
   struct host * to_client = clients;
   while (to_client != NULL) {
@@ -523,8 +523,8 @@ int client__P2P_file_transfer(char peer_ip[], char file_name[MAXDATASIZE]) {
     bzero(buffer, MAXDATASIZE);
   }
 
-  cse4589_print_and_log("[SENDFILE:SUCCESS]\n");
-  cse4589_print_and_log("[SENDFILE:END]\n");
+ cse4589_print_and_log("[SENDFILE:SUCCESS]\n");
+ cse4589_print_and_log("[SENDFILE:END]\n");
 
 }
 
@@ -544,8 +544,8 @@ void receive_file_from_peer(int peer_fd) {
     }
     bzero(buffer, MAXDATASIZE);
   }
-  cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
-  cse4589_print_and_log("[RECIEVE:END]\n");
+ cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
+ cse4589_print_and_log("[RECIEVE:END]\n");
 }
 
 /// Following are for client only
@@ -554,20 +554,20 @@ void client__login(char server_ip[], char server_port[]) {
   // Register the server if it's their first time. Client, will store,
   // server information
   if (server_ip == NULL || server_port == NULL) {
-    cse4589_print_and_log("[LOGIN:ERROR]\n");
-    cse4589_print_and_log("[LOGIN:END]\n");
+   cse4589_print_and_log("[LOGIN:ERROR]\n");
+   cse4589_print_and_log("[LOGIN:END]\n");
     return;
   }
   if (server == NULL) {
     if (!host__check_valid_ip_addr(server_ip) || client__register_server(server_ip, server_port) == 0) {
-      cse4589_print_and_log("[LOGIN:ERROR]\n");
-      cse4589_print_and_log("[LOGIN:END]\n");
+     cse4589_print_and_log("[LOGIN:ERROR]\n");
+     cse4589_print_and_log("[LOGIN:END]\n");
       return;
     }
   } else {
     if (strstr(server -> ip_addr, server_ip) == NULL || strstr(server -> port_num, server_port) == NULL) {
-      cse4589_print_and_log("[LOGIN:ERROR]\n");
-      cse4589_print_and_log("[LOGIN:END]\n");
+     cse4589_print_and_log("[LOGIN:ERROR]\n");
+     cse4589_print_and_log("[LOGIN:END]\n");
       return;
     }
   }
@@ -591,7 +591,7 @@ void client__login(char server_ip[], char server_port[]) {
   FD_SET(STDIN, & master); // Add STDIN to the master list
   int fdmax = server -> fd > STDIN ? server -> fd : STDIN; // maximum file descriptor number. initialised to listener    
   // variable initialisations
-  char data_buffer[MAXDATASIZE]; // buffer for client data
+  char data_buffer[MAXDATASIZEBACKGROUND]; // buffer for client data
   int data_buffer_bytes; // holds number of bytes received and stored in data_buffer
   int fd;
   struct sockaddr_storage new_peer_addr; // client address
@@ -632,9 +632,9 @@ void client__login(char server_ip[], char server_port[]) {
           }
         } else if (fd == STDIN) {
           // handle data from standard input
-          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
-          memset(command, '\0', MAXDATASIZE);
-          if (fgets(command, MAXDATASIZE - 1, stdin) == NULL) { // -1 because of new line
+          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
+          memset(command, '\0', MAXDATASIZEBACKGROUND);
+          if (fgets(command, MAXDATASIZEBACKGROUND - 1, stdin) == NULL) { // -1 because of new line
             // changePrint("DONOTLOG: Something went wrong reading stdin");
           } else {
             execute_command(command, STDIN);
@@ -680,7 +680,6 @@ void client__refresh_client_list(char clientListString[]) {
     cmdi++;
     rcvi++;
   }
-  char newLine[MAXDATASIZE];
   bool is_refresh = false;
   clients = malloc(sizeof(struct host));
   struct host * head = clients;
@@ -709,8 +708,8 @@ void client__refresh_client_list(char clientListString[]) {
     clients = head -> next_host;
   }
   if (is_refresh) {
-    cse4589_print_and_log("[REFRESH:SUCCESS]\n");
-    cse4589_print_and_log("[REFRESH:END]\n");
+   cse4589_print_and_log("[REFRESH:SUCCESS]\n");
+   cse4589_print_and_log("[REFRESH:END]\n");
   } else {
     client__execute_command("SUCCESSLOGIN");
   }
@@ -759,7 +758,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
       continue;
     }
 
-    char receive[MAXDATASIZE * 3];
+    char receive[MAXDATASIZEBACKGROUND*10];
 
     if (to_client -> is_logged_in) {
       to_client -> num_msg_rcv++;
@@ -783,13 +782,13 @@ void server__broadcast(char msg[], int requesting_client_fd) {
     to_client = to_client -> next_host;
   }
 
-  cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-  cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client -> ip_addr, msg);
-  cse4589_print_and_log("[RELAYED:END]\n");
+ cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+ cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n", from_client -> ip_addr, msg);
+ cse4589_print_and_log("[RELAYED:END]\n");
   host__send_command(from_client -> fd, "SUCCESSBROADCAST\n");
 }
 
-void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
+void client__block_or_unblock(char command[], bool is_a_block) {
   char client_ip[MAXDATASIZE];
   if (is_a_block) {
     sscanf(command, "BLOCK %s\n", client_ip);
@@ -852,16 +851,16 @@ void client__block_or_unblock(char command[MAXDATASIZE], bool is_a_block) {
 
   } else {
     if (is_a_block) {
-      cse4589_print_and_log("[BLOCK:ERROR]\n");
-      cse4589_print_and_log("[BLOCK:END]\n");
+     cse4589_print_and_log("[BLOCK:ERROR]\n");
+     cse4589_print_and_log("[BLOCK:END]\n");
     } else {
-      cse4589_print_and_log("[UNBLOCK:ERROR]\n");
-      cse4589_print_and_log("[UNBLOCK:END]\n");
+     cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+     cse4589_print_and_log("[UNBLOCK:END]\n");
     }
   }
 }
 
-void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int requesting_client_fd) {
+void server__block_or_unblock(char command[], bool is_a_block, int requesting_client_fd) {
   char client_ip[MAXDATASIZE], client_port[MAXDATASIZE];;
   if (is_a_block) {
     sscanf(command, "BLOCK %s %s\n", client_ip, client_port);
@@ -934,8 +933,8 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
 
 void client_exit() {
   host__send_command(server -> fd, "EXIT");
-  cse4589_print_and_log("[EXIT:SUCCESS]\n");
-  cse4589_print_and_log("[EXIT:END]\n");
+ cse4589_print_and_log("[EXIT:SUCCESS]\n");
+ cse4589_print_and_log("[EXIT:END]\n");
   exit(0);
 }
 
@@ -943,8 +942,8 @@ void send_file(char * client_ip, char * file_path) {
 
 }
 
-void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATASIZE], char client_hostname[MAXDATASIZE], int requesting_client_fd) {
-  char client_return_msg[MAXDATASIZEBACKGROUND * 100] = "REFRESHRESPONSE FIRST\n";
+void server__handle_login(char client_ip[], char client_port[], char client_hostname[], int requesting_client_fd) {
+  char client_return_msg[] = "REFRESHRESPONSE FIRST\n";
   struct host * temp = clients;
   bool is_new = true;
   struct host * requesting_client = malloc(sizeof(struct host));
@@ -994,7 +993,7 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
 
   strcat(client_return_msg, "ENDREFRESH\n");
   struct message * temp_message = requesting_client -> queued_messages;
-  char receive[MAXDATASIZE * 3];
+  char receive[MAXDATASIZEBACKGROUND * 10];
 
   while (temp_message != NULL) {
     requesting_client -> num_msg_rcv++;
@@ -1002,9 +1001,9 @@ void server__handle_login(char client_ip[MAXDATASIZE], char client_port[MAXDATAS
     strcat(client_return_msg, receive);
 
     if (!temp_message -> is_broadcast) {
-      cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-      cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message -> from_client -> ip_addr, requesting_client -> ip_addr, temp_message -> text);
-      cse4589_print_and_log("[RELAYED:END]\n");
+     cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+     cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", temp_message -> from_client -> ip_addr, requesting_client -> ip_addr, temp_message -> text);
+     cse4589_print_and_log("[RELAYED:END]\n");
     }
     temp_message = temp_message -> next_message;
   }
@@ -1027,9 +1026,9 @@ void server__handle_refresh(int requesting_client_fd) {
   host__send_command(requesting_client_fd, clientListString);
 }
 
-void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE], int requesting_client_fd) {
+void server__handle_send(char client_ip[], char msg[], int requesting_client_fd) {
 
-  char receive[MAXDATASIZE * 3];
+  char receive[MAXDATASIZEBACKGROUND * 10];
   struct host * temp = clients;
   struct host * from_client = malloc(sizeof(struct host)), * to_client = malloc(sizeof(struct host));;
   while (temp != NULL) {
@@ -1043,8 +1042,8 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE], int
   }
   if (to_client == NULL || from_client == NULL) {
     // TODO: CHECK IF THIS IS REQUIRED
-    cse4589_print_and_log("[RELAYED:ERROR]\n");
-    cse4589_print_and_log("[RELAYED:END]\n");
+   cse4589_print_and_log("[RELAYED:ERROR]\n");
+   cse4589_print_and_log("[RELAYED:END]\n");
 
     return;
   }
@@ -1064,9 +1063,9 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE], int
   }
   host__send_command(from_client -> fd, "SUCCESSSEND\n");
   if (is_blocked) {
-    cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-    cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client -> ip_addr, to_client -> ip_addr, msg);
-    cse4589_print_and_log("[RELAYED:END]\n");
+   cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+   cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client -> ip_addr, to_client -> ip_addr, msg);
+   cse4589_print_and_log("[RELAYED:END]\n");
     host__send_command(from_client -> fd, "SUCCESSSEND\n");
     return;
   }
@@ -1077,9 +1076,9 @@ void server__handle_send(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE], int
     host__send_command(to_client -> fd, receive);
 
     // TODO: CHECK IF THIS NEEDS TO BE SENT WHEN BLOCKED
-    cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-    cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client -> ip_addr, to_client -> ip_addr, msg);
-    cse4589_print_and_log("[RELAYED:END]\n");
+   cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+   cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n", from_client -> ip_addr, to_client -> ip_addr, msg);
+   cse4589_print_and_log("[RELAYED:END]\n");
   } else {
     struct message * new_message = malloc(sizeof(struct message));
     memcpy(new_message -> text, msg, sizeof(new_message -> text));
@@ -1113,15 +1112,15 @@ void server__handle_logout(int requesting_client_fd) {
   }
 }
 
-void client__handle_receive(char client_ip[MAXDATASIZE], char msg[MAXDATASIZE]) {
-  cse4589_print_and_log("[RECEIVED:SUCCESS]\n");
-  cse4589_print_and_log("msg from:%s\n[msg]:%s\n", client_ip, msg);
-  cse4589_print_and_log("[RECEIVED:END]\n");
+void client__handle_receive(char client_ip[], char msg[]) {
+ cse4589_print_and_log("[RECEIVED:SUCCESS]\n");
+ cse4589_print_and_log("msg from:%s\n[msg]:%s\n", client_ip, msg);
+ cse4589_print_and_log("[RECEIVED:END]\n");
 }
 
 void client__print_success_login() {
-  cse4589_print_and_log("[LOGIN:SUCCESS]\n");
-  cse4589_print_and_log("[LOGIN:END]\n");
+ cse4589_print_and_log("[LOGIN:SUCCESS]\n");
+ cse4589_print_and_log("[LOGIN:END]\n");
 }
 
 void server__handle_exit(int requesting_client_fd) {
@@ -1154,7 +1153,7 @@ void server__handle_exit(int requesting_client_fd) {
   }
 }
 
-void client__send(char command[MAXDATASIZEBACKGROUND]) {
+void client__send(char command[]) {
   host__send_command(server -> fd, command);
 }
 
@@ -1183,7 +1182,7 @@ void server__execute_command(char command[], int requesting_client_fd) {
     sscanf(command, "LOGIN %s %s %s", client_ip, client_port, client_hostname);
     server__handle_login(client_ip, client_port, client_hostname, requesting_client_fd);
   } else if (strstr(command, "BROADCAST") != NULL) {
-    char message[MAXDATASIZE];
+    char message[MAXDATASIZEBACKGROUND];
     int cmdi = 10;
     int msgi = 0;
     while (command[cmdi] != '\0') {
@@ -1230,40 +1229,40 @@ void client__execute_command(char command[]) {
     if (localhost -> is_logged_in) {
       host__print_list_of_clients();
     } else {
-      cse4589_print_and_log("[LIST:ERROR]\n");
-      cse4589_print_and_log("[LIST:END]\n");
+     cse4589_print_and_log("[LIST:ERROR]\n");
+     cse4589_print_and_log("[LIST:END]\n");
     }
   } else if (strstr(command, "SUCCESSLOGIN") != NULL) {
-    cse4589_print_and_log("[LOGIN:SUCCESS]\n");
-    cse4589_print_and_log("[LOGIN:END]\n");
+   cse4589_print_and_log("[LOGIN:SUCCESS]\n");
+   cse4589_print_and_log("[LOGIN:END]\n");
   } else if (strstr(command, "ERRORLOGIN") != NULL) {
-    cse4589_print_and_log("[LOGIN:ERROR]\n");
-    cse4589_print_and_log("[LOGIN:END]\n");
+   cse4589_print_and_log("[LOGIN:ERROR]\n");
+   cse4589_print_and_log("[LOGIN:END]\n");
   } else if (strstr(command, "SUCCESSLOGOUT") != NULL) {
     localhost -> is_logged_in = false;
-    cse4589_print_and_log("[LOGOUT:SUCCESS]\n");
-    cse4589_print_and_log("[LOGOUT:END]\n");
+   cse4589_print_and_log("[LOGOUT:SUCCESS]\n");
+   cse4589_print_and_log("[LOGOUT:END]\n");
   } else if (strstr(command, "ERRORLOGOUT") != NULL) {
-    cse4589_print_and_log("[LOGOUT:ERROR]\n");
-    cse4589_print_and_log("[LOGOUT:END]\n");
+   cse4589_print_and_log("[LOGOUT:ERROR]\n");
+   cse4589_print_and_log("[LOGOUT:END]\n");
   } else if (strstr(command, "SUCCESSBROADCAST") != NULL) {
-    cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
-    cse4589_print_and_log("[BROADCAST:END]\n");
+   cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
+   cse4589_print_and_log("[BROADCAST:END]\n");
   } else if (strstr(command, "SUCCESSUNBLOCK") != NULL) {
-    cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");
-    cse4589_print_and_log("[UNBLOCK:END]\n");
+   cse4589_print_and_log("[UNBLOCK:SUCCESS]\n");
+   cse4589_print_and_log("[UNBLOCK:END]\n");
   } else if (strstr(command, "SUCCESSBLOCK") != NULL) {
-    cse4589_print_and_log("[BLOCK:SUCCESS]\n");
-    cse4589_print_and_log("[BLOCK:END]\n");
+   cse4589_print_and_log("[BLOCK:SUCCESS]\n");
+   cse4589_print_and_log("[BLOCK:END]\n");
   } else if (strstr(command, "ERRORUNBLOCK") != NULL) {
-    cse4589_print_and_log("[UNBLOCK:ERROR]\n");
-    cse4589_print_and_log("[UNBLOCK:END]\n");
+   cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+   cse4589_print_and_log("[UNBLOCK:END]\n");
   } else if (strstr(command, "ERRORBLOCK") != NULL) {
-    cse4589_print_and_log("[BLOCK:ERROR]\n");
-    cse4589_print_and_log("[BLOCK:END]\n");
+   cse4589_print_and_log("[BLOCK:ERROR]\n");
+   cse4589_print_and_log("[BLOCK:END]\n");
   } else if (strstr(command, "SUCCESSSEND") != NULL) {
-    cse4589_print_and_log("[SEND:SUCCESS]\n");
-    cse4589_print_and_log("[SEND:END]\n");
+   cse4589_print_and_log("[SEND:SUCCESS]\n");
+   cse4589_print_and_log("[SEND:END]\n");
   } else if (strstr(command, "LOGIN") != NULL) { // takes two arguments server ip and server port
     char server_ip[MAXDATASIZE], server_port[MAXDATASIZE];
     int cmdi = 6;
@@ -1290,8 +1289,8 @@ void client__execute_command(char command[]) {
     if (localhost -> is_logged_in) {
       host__send_command(server -> fd, "REFRESH\n");
     } else {
-      cse4589_print_and_log("[REFRESH:ERROR]\n");
-      cse4589_print_and_log("[REFRESH:END]\n");
+     cse4589_print_and_log("[REFRESH:ERROR]\n");
+     cse4589_print_and_log("[REFRESH:END]\n");
     }
   } else if (strstr(command, "SENDFILE") != NULL) {
     if (localhost -> is_logged_in) {
@@ -1299,18 +1298,18 @@ void client__execute_command(char command[]) {
       // sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
       // client__P2P_file_transfer(peer_ip, file_name);
     } else {
-      cse4589_print_and_log("[SENDFILE:ERROR]\n");
-      cse4589_print_and_log("[SENDFILE:END]\n");
+     cse4589_print_and_log("[SENDFILE:ERROR]\n");
+     cse4589_print_and_log("[SENDFILE:END]\n");
     }
   } else if (strstr(command, "SEND") != NULL) {
     if (localhost -> is_logged_in) {
       client__send(command);
     } else {
-      cse4589_print_and_log("[SEND:ERROR]\n");
-      cse4589_print_and_log("[SEND:END]\n");
+     cse4589_print_and_log("[SEND:ERROR]\n");
+     cse4589_print_and_log("[SEND:END]\n");
     }
   } else if (strstr(command, "RECEIVE") != NULL) {
-    char client_ip[MAXDATASIZE], message[MAXDATASIZE];
+    char client_ip[MAXDATASIZE], message[MAXDATASIZEBACKGROUND];
     int cmdi = 8;
     int ipi = 0;
     while (command[cmdi] != ' ' && ipi < 256) {
@@ -1333,29 +1332,29 @@ void client__execute_command(char command[]) {
     if (localhost -> is_logged_in) {
       host__send_command(server -> fd, command);
     } else {
-      cse4589_print_and_log("[BROADCAST:ERROR]\n");
-      cse4589_print_and_log("[BROADCAST:END]\n");
+     cse4589_print_and_log("[BROADCAST:ERROR]\n");
+     cse4589_print_and_log("[BROADCAST:END]\n");
     }
   } else if (strstr(command, "UNBLOCK") != NULL) {
     if (localhost -> is_logged_in) {
       client__block_or_unblock(command, false);
     } else {
-      cse4589_print_and_log("[UNBLOCK:ERROR]\n");
-      cse4589_print_and_log("[UNBLOCK:END]\n");
+     cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+     cse4589_print_and_log("[UNBLOCK:END]\n");
     }
   } else if (strstr(command, "BLOCK") != NULL) {
     if (localhost -> is_logged_in) {
       client__block_or_unblock(command, true);
     } else {
-      cse4589_print_and_log("[BLOCK:ERROR]\n");
-      cse4589_print_and_log("[BLOCK:END]\n");
+     cse4589_print_and_log("[BLOCK:ERROR]\n");
+     cse4589_print_and_log("[BLOCK:END]\n");
     }
   } else if (strstr(command, "LOGOUT") != NULL) {
     if (localhost -> is_logged_in) {
       host__send_command(server -> fd, command);
     } else {
-      cse4589_print_and_log("[LOGOUT:ERROR]\n");
-      cse4589_print_and_log("[LOGOUT:END]\n");
+     cse4589_print_and_log("[LOGOUT:ERROR]\n");
+     cse4589_print_and_log("[LOGOUT:END]\n");
     }
   } else if (strstr(command, "EXIT") != NULL) {
     client_exit();
