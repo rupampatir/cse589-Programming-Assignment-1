@@ -584,7 +584,7 @@ void client__login(char server_ip[], char server_port[]) {
   // The client will send a login message to server with it's details here
   localhost -> is_logged_in = true;
 
-  char msg[MAXDATASIZE * 4];
+  char msg[MAXDATASIZE];
   sprintf(msg, "LOGIN %s %s %s\n", localhost -> ip_addr, localhost -> port_num, localhost -> hostname);
   host__send_command(server -> fd, msg);
 
@@ -764,7 +764,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
       continue;
     }
 
-    char receive[MAXDATASIZE * 4];
+    char receive[MAXDATASIZE];
 
     if (to_client -> is_logged_in) {
       to_client -> num_msg_rcv++;
@@ -990,7 +990,7 @@ void server__handle_login(char client_ip[], char client_port[], char client_host
   temp = clients;
   while (temp != NULL) {
     if (temp -> is_logged_in) {
-      char clientString[MAXDATASIZE * 4];
+      char clientString[MAXDATASIZE];
       sprintf(clientString, "%s %s %s\n", temp -> ip_addr, temp -> port_num, temp -> hostname);
       strcat(client_return_msg, clientString);
     }
@@ -999,7 +999,7 @@ void server__handle_login(char client_ip[], char client_port[], char client_host
 
   strcat(client_return_msg, "ENDREFRESH\n");
   struct message * temp_message = requesting_client -> queued_messages;
-  char receive[MAXDATASIZEBACKGROUND * 3];
+  char receive[MAXDATASIZE];
 
   while (temp_message != NULL) {
     requesting_client -> num_msg_rcv++;
@@ -1022,7 +1022,7 @@ void server__handle_refresh(int requesting_client_fd) {
   struct host * temp = clients;
   while (temp != NULL) {
     if (temp -> is_logged_in) {
-      char clientString[MAXDATASIZE * 4];
+      char clientString[MAXDATASIZE];
       sprintf(clientString, "%s %s %s\n", temp -> ip_addr, temp -> port_num, temp -> hostname);
       strcat(clientListString, clientString);
     }
@@ -1034,7 +1034,7 @@ void server__handle_refresh(int requesting_client_fd) {
 
 void server__handle_send(char client_ip[], char msg[], int requesting_client_fd) {
 
-  char receive[MAXDATASIZE * 4];
+  char receive[MAXDATASIZE];
   struct host * temp = clients;
   struct host * from_client = malloc(sizeof(struct host)), * to_client = malloc(sizeof(struct host));;
   while (temp != NULL) {
