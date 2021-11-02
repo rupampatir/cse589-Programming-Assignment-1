@@ -229,9 +229,9 @@ void server__init() {
           fflush(stdout);
         } else if (fd == STDIN) {
           // handle data from standard input
-          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
-          memset(command, '\0', MAXDATASIZEBACKGROUND);
-          if (fgets(command, MAXDATASIZEBACKGROUND - 1, stdin) == NULL) { // -1 because of new line
+          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
+          memset(command, '\0', MAXDATASIZE);
+          if (fgets(command, MAXDATASIZE - 1, stdin) == NULL) { // -1 because of new line
             // changePrint("DONOTLOG: Something went wrong reading stdin");
           } else {
             execute_command(command, fd);
@@ -660,7 +660,7 @@ void client__login(char server_ip[], char server_port[]) {
 
 }
 
-void client__refresh_client_list(char clientListString[MAXDATASIZEBACKGROUND]) {
+void client__refresh_client_list(char clientListString[]) {
   char * received = strstr(clientListString, "RECEIVE");
   int rcvi = received - clientListString, cmdi = 0;
   char command[MAXDATASIZE];
@@ -873,7 +873,6 @@ void server__block_or_unblock(char command[MAXDATASIZE], bool is_a_block, int re
   struct host * blocked_client = malloc(sizeof(struct host));
 
   while (temp != NULL) {
-    char clientString[MAXDATASIZEBACKGROUND];
     if (temp -> fd == requesting_client_fd) {
       requesting_client = temp;
     }
