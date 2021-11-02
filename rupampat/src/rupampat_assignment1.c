@@ -1169,6 +1169,11 @@ void client__send(char command[]) {
       ipi += 1;
     }
     client_ip[ipi] = '\0';
+    if (!host__check_valid_ip_addr(client_ip)) {
+        cse4589_print_and_log("[SEND:ERROR]\n");
+        cse4589_print_and_log("[SEND:END]\n");
+        return;
+    }
     struct host * temp = clients;
     while (temp != NULL) {
         if (strstr(temp -> ip_addr, client_ip) != NULL) {
