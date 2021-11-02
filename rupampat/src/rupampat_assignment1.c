@@ -270,7 +270,55 @@ void server__init() {
   return;
 }
 
+
+int client__register_listener() {
+    int listener = 0, status;
+  struct addrinfo hints, * localhost_ai, * temp_ai;
+
+  // get a socket and bind it
+  memset( & hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  if (status = getaddrinfo(NULL, localhost -> port_num, & hints, & localhost_ai) != 0) {
+    // changePrint("DONOTLOG: Could not get addrinfo");
+    exit(EXIT_FAILURE);
+  }
+
+  for (temp_ai = localhost_ai; temp_ai != NULL; temp_ai = temp_ai -> ai_next) {
+    listener = socket(temp_ai -> ai_family, temp_ai -> ai_socktype, temp_ai -> ai_protocol);
+    if (listener < 0) {
+      continue;
+    }
+    setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, & yes, sizeof(int));
+    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof(int));
+    if (bind(listener, temp_ai -> ai_addr, temp_ai -> ai_addrlen) < 0) {
+      close(listener);
+      continue;
+    }
+    break;
+  }
+
+  // exit if could not bind
+  if (temp_ai == NULL) {
+    // changePrint("DONOTLOG: Could not bind");
+    exit(EXIT_FAILURE);
+  }
+
+  // listen
+  if (listen(listener, 10) == -1) {
+    // changePrint("DONOTLOG: Could not listen");
+    exit(EXIT_FAILURE);
+  }
+
+  localhost -> fd = listener;
+
+  freeaddrinfo(localhost_ai);
+}
+
 void client__init() {
+    // TODO: modularise
+    client__register_listener();
   while (true) {
     // handle data from standard input
     char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
@@ -461,6 +509,7 @@ int client__register_server(char server_ip[], char server_port[]) {
 
 int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
 
+    
   struct host * to_client = clients;
   while (to_client != NULL) {
     if (strstr(to_client -> ip_addr, peer_ip) != NULL) {
@@ -511,16 +560,16 @@ int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
 
   freeaddrinfo(to_client_ai);
   // }
-
-  // send the filename
-  char msg[MAXDATASIZEBACKGROUND];
-  sprintf(msg, "FILENAME %s\n", file_name);
-  host__send_command(to_client -> fd, msg);
-
-  // Send the file
-  char buffer[MAXDATASIZE] = {
+char buffer[MAXDATASIZE] = {
     0
   };
+  // send the filename
+  sprintf(buffer, "FILENAME %s\n", file_name);
+   if (send(to_client -> fd, buffer, sizeof(buffer), 0) == -1) {
+      // changePrint("[DONOTLOG]Error in sending file.");
+    }
+  // Send the file
+  
   FILE * file_pointer = fopen(file_name, "r");
   while (fgets(buffer, MAXDATASIZE, file_pointer) != NULL) {
     if (send(to_client -> fd, buffer, sizeof(buffer), 0) == -1) {
@@ -528,30 +577,35 @@ int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
     }
     bzero(buffer, MAXDATASIZE);
   }
+  close(to_client -> fd);
 
  cse4589_print_and_log("[SENDFILE:SUCCESS]\n");
  cse4589_print_and_log("[SENDFILE:END]\n");
 
 }
 
-void receive_file_from_peer(int peer_fd) {
+void client__receive_file_from_peer(int peer_fd) {
   int n;
   char buffer[MAXDATASIZE];
+    n = recv(peer_fd, buffer, MAXDATASIZE, 0);
+    sscanf(buffer, "FILENAME %s\n", received_file_name);
+    FILE * file_pointer = fopen(received_file_name, "w+");
+    fflush(stdout);
   while (1) {
     n = recv(peer_fd, buffer, MAXDATASIZE, 0);
     if (n <= 0) {
-      break;
-    }
-    if (strstr(buffer, "FILENAME") != NULL) {
-      // sscanf(buffer, "FILENAME %s\n", received_file_name);
-    } else {
-      FILE * file_pointer = fopen(received_file_name, "w");
-      fprintf(file_pointer, "%s", buffer);
-    }
+        cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
+        cse4589_print_and_log("[RECIEVE:END]\n");
+        fflush(stdout);
+        fclose(file_pointer);
+        return;
+    } 
+
+    fprintf(file_pointer, "%s", buffer);
+    
     bzero(buffer, MAXDATASIZE);
   }
- cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
- cse4589_print_and_log("[RECIEVE:END]\n");
+    
 }
 
 /// Following are for client only
@@ -595,7 +649,9 @@ void client__login(char server_ip[], char server_port[]) {
   FD_ZERO( & read_fds);
   FD_SET(server -> fd, & master); // Add server->fd to the master list
   FD_SET(STDIN, & master); // Add STDIN to the master list
+  FD_SET(localhost->fd, & master);
   int fdmax = server -> fd > STDIN ? server -> fd : STDIN; // maximum file descriptor number. initialised to listener    
+  fdmax = fdmax > localhost->fd ? fdmax : localhost->fd;
   // variable initialisations
   char data_buffer[MAXDATASIZEBACKGROUND]; // buffer for client data
   int data_buffer_bytes; // holds number of bytes received and stored in data_buffer
@@ -645,16 +701,14 @@ void client__login(char server_ip[], char server_port[]) {
           } else {
             execute_command(command, STDIN);
           }
-        } else {
+        } else if (fd == localhost->fd) {
 
           int new_peer_fd = accept(fd, (struct sockaddr * ) & new_peer_addr, & addrlen);
-
           if (new_peer_fd == -1) {
             // changePrint("DONOTLOG: Could not accept new connection.");
           } else {
-            receive_file_from_peer(new_peer_fd);
+            client__receive_file_from_peer(new_peer_fd);
           }
-
         }
       }
     }
@@ -942,10 +996,6 @@ void client_exit() {
  cse4589_print_and_log("[EXIT:SUCCESS]\n");
  cse4589_print_and_log("[EXIT:END]\n");
   exit(0);
-}
-
-void send_file(char * client_ip, char * file_path) {
-
 }
 
 void server__handle_login(char client_ip[], char client_port[], char client_hostname[], int requesting_client_fd) {
@@ -1326,9 +1376,9 @@ void client__execute_command(char command[]) {
     }
   } else if (strstr(command, "SENDFILE") != NULL) {
     if (localhost -> is_logged_in) {
-      // char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
-      // sscanf(command, "SENDFILE %s %s", peer_ip, file_name);
-      // client__P2P_file_transfer(peer_ip, file_name);
+      char peer_ip[MAXDATASIZE], file_name[MAXDATASIZE];
+      sscanf(command, "SENDFILE %s %s\n", peer_ip, file_name);
+      client__P2P_file_transfer(peer_ip, file_name);
     } else {
      cse4589_print_and_log("[SENDFILE:ERROR]\n");
      cse4589_print_and_log("[SENDFILE:END]\n");
@@ -1390,9 +1440,6 @@ void client__execute_command(char command[]) {
     }
   } else if (strstr(command, "EXIT") != NULL) {
     client_exit();
-  } else if (strstr(command, "SENDFILE") != NULL) {
-    //split the command into the two arguments. may beed to return pointer from strstr
-    // client__send(command, command); 
   }
   fflush(stdout);
 }
