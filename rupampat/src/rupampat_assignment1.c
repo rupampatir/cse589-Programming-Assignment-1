@@ -145,6 +145,7 @@ void server__init() {
       continue;
     }
     setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, & yes, sizeof(int));
+    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof(int));
     if (bind(listener, temp_ai -> ai_addr, temp_ai -> ai_addrlen) < 0) {
       close(listener);
       continue;
@@ -397,6 +398,7 @@ int client__register_server(char server_ip[], char server_port[]) {
       continue;
     }
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, & yes, sizeof(int));
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof(int));
     if (connect(server_fd, temp_ai -> ai_addr, temp_ai -> ai_addrlen) < 0) {
       // changePrint("DONOTLOG: Could not connect");
       close(server_fd);
@@ -429,6 +431,8 @@ int client__register_server(char server_ip[], char server_port[]) {
       continue;
     }
     setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, & yes, sizeof(int));
+    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof(int));
+
     if (bind(listener, temp_ai -> ai_addr, temp_ai -> ai_addrlen) < 0) {
       close(listener);
       continue;
@@ -487,6 +491,8 @@ int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
       continue;
     }
     setsockopt(to_client_fd, SOL_SOCKET, SO_REUSEPORT, & yes, sizeof(int));
+    setsockopt(to_client_fd, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof(int));
+
     if (connect(to_client_fd, temp_ai -> ai_addr, temp_ai -> ai_addrlen) < 0) {
       // changePrint("DONOTLOG: Could not connect");
       close(to_client_fd);
