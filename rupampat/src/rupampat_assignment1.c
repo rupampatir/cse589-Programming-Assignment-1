@@ -229,7 +229,7 @@ void server__init() {
           fflush(stdout);
         } else if (fd == STDIN) {
           // handle data from standard input
-          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
+          char * command = (char * ) malloc(sizeof(char) * MAXDATASIZEBACKGROUND);
           memset(command, '\0', MAXDATASIZEBACKGROUND);
           if (fgets(command, MAXDATASIZEBACKGROUND - 1, stdin) == NULL) { // -1 because of new line
             // changePrint("DONOTLOG: Something went wrong reading stdin");
