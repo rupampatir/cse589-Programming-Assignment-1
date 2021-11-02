@@ -584,7 +584,7 @@ void client__login(char server_ip[], char server_port[]) {
   // The client will send a login message to server with it's details here
   localhost -> is_logged_in = true;
 
-  char msg[MAXDATASIZE];
+  char msg[MAXDATASIZE * 4];
   sprintf(msg, "LOGIN %s %s %s\n", localhost -> ip_addr, localhost -> port_num, localhost -> hostname);
   host__send_command(server -> fd, msg);
 
@@ -764,7 +764,7 @@ void server__broadcast(char msg[], int requesting_client_fd) {
       continue;
     }
 
-    char receive[MAXDATASIZE];
+    char receive[MAXDATASIZE * 4];
 
     if (to_client -> is_logged_in) {
       to_client -> num_msg_rcv++;
@@ -990,7 +990,7 @@ void server__handle_login(char client_ip[], char client_port[], char client_host
   temp = clients;
   while (temp != NULL) {
     if (temp -> is_logged_in) {
-      char clientString[MAXDATASIZE];
+      char clientString[MAXDATASIZE * 4];
       sprintf(clientString, "%s %s %s\n", temp -> ip_addr, temp -> port_num, temp -> hostname);
       strcat(client_return_msg, clientString);
     }
@@ -999,7 +999,7 @@ void server__handle_login(char client_ip[], char client_port[], char client_host
 
   strcat(client_return_msg, "ENDREFRESH\n");
   struct message * temp_message = requesting_client -> queued_messages;
-  char receive[MAXDATASIZE];
+  char receive[MAXDATASIZEBACKGROUND * 3];
 
   while (temp_message != NULL) {
     requesting_client -> num_msg_rcv++;
@@ -1022,7 +1022,7 @@ void server__handle_refresh(int requesting_client_fd) {
   struct host * temp = clients;
   while (temp != NULL) {
     if (temp -> is_logged_in) {
-      char clientString[MAXDATASIZE];
+      char clientString[MAXDATASIZE * 4];
       sprintf(clientString, "%s %s %s\n", temp -> ip_addr, temp -> port_num, temp -> hostname);
       strcat(clientListString, clientString);
     }
@@ -1034,7 +1034,7 @@ void server__handle_refresh(int requesting_client_fd) {
 
 void server__handle_send(char client_ip[], char msg[], int requesting_client_fd) {
 
-  char receive[MAXDATASIZE];
+  char receive[MAXDATASIZE * 4];
   struct host * temp = clients;
   struct host * from_client = malloc(sizeof(struct host)), * to_client = malloc(sizeof(struct host));;
   while (temp != NULL) {
@@ -1160,7 +1160,27 @@ void server__handle_exit(int requesting_client_fd) {
 }
 
 void client__send(char command[]) {
-  host__send_command(server -> fd, command);
+    char client_ip[MAXDATASIZE];
+    int cmdi = 5;
+    int ipi = 0;
+    while (command[cmdi] != ' ') {
+      client_ip[ipi] = command[cmdi];
+      cmdi += 1;
+      ipi += 1;
+    }
+    client_ip[ipi] = '0';
+    struct host * temp = clients;
+    while (temp != NULL) {
+        if (strstr(temp -> ip_addr, client_ip) != NULL) {
+              host__send_command(server -> fd, command);
+            break;
+        }
+        temp = temp -> next_host;
+    }
+    if (temp == NULL) {
+        cse4589_print_and_log("[SEND:ERROR]\n");
+        cse4589_print_and_log("[SEND:END]\n");
+    }
 }
 
 void common__execute_command(char command[], int requesting_client_fd) {
@@ -1209,6 +1229,7 @@ void server__execute_command(char command[], int requesting_client_fd) {
       cmdi += 1;
       ipi += 1;
     }
+    client_ip[ipi] = '0';
     cmdi++;
     int msgi = 0;
     while (command[cmdi] != '\0') {
