@@ -1229,7 +1229,6 @@ void server__execute_command(char command[], int requesting_client_fd) {
       cmdi += 1;
       ipi += 1;
     }
-    client_ip[ipi] = '\0';
     cmdi++;
     int msgi = 0;
     while (command[cmdi] != '\0') {
