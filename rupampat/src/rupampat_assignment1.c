@@ -230,8 +230,8 @@ void server__init() {
         } else if (fd == STDIN) {
           // handle data from standard input
           char * command = (char * ) malloc(sizeof(char) * MAXDATASIZE);
-          memset(command, '\0', MAXDATASIZE);
-          if (fgets(command, MAXDATASIZE, stdin) == NULL) { // -1 because of new line
+          memset(command, '\0', MAXDATASIZEBACKGROUND);
+          if (fgets(command, MAXDATASIZEBACKGROUND - 1, stdin) == NULL) { // -1 because of new line
             // changePrint("DONOTLOG: Something went wrong reading stdin");
           } else {
             execute_command(command, fd);
