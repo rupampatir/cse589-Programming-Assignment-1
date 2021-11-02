@@ -570,7 +570,7 @@ char buffer[MAXDATASIZE] = {
     }
   // Send the file
   
-  FILE * file_pointer = fopen(file_name, "r");
+  FILE * file_pointer = fopen(file_name, "rb");
   while (fgets(buffer, MAXDATASIZE, file_pointer) != NULL) {
     if (send(to_client -> fd, buffer, sizeof(buffer), 0) == -1) {
       // changePrint("[DONOTLOG]Error in sending file.");
@@ -589,7 +589,7 @@ void client__receive_file_from_peer(int peer_fd) {
   char buffer[MAXDATASIZE];
     n = recv(peer_fd, buffer, MAXDATASIZE, 0);
     sscanf(buffer, "FILENAME %s\n", received_file_name);
-    FILE * file_pointer = fopen(received_file_name, "w+");
+    FILE * file_pointer = fopen(received_file_name, "wb+");
     fflush(stdout);
   while (1) {
     n = recv(peer_fd, buffer, MAXDATASIZE, 0);
