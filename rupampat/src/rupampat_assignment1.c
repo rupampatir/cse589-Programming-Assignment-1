@@ -590,7 +590,7 @@ void client__receive_file_from_peer(int peer_fd) {
   recv(peer_fd, buffer, MAXDATASIZE, 0);
   sscanf(buffer, "FILESIZE %s\n", temp);
   long received_file_size = atoi(temp);
-  FILE *file = fopen("somepdf.pdf", "wb"); 
+  FILE *file = fopen(received_file_name, "wb"); 
   while(received_file_size>0) {
     int len = recv(peer_fd, buffer, min(sizeof(buffer), received_file_size), 0);
     fwrite(buffer, 1, len, file);
