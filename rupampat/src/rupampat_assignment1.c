@@ -37,6 +37,8 @@
 
 #include <sys/socket.h>
 
+#include <sys/stat.h>
+
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
@@ -47,6 +49,7 @@
 
 #include "../include/global.h"
 #include "../include/logger.h"
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 #define MAXDATASIZE 500
 #define MAXDATASIZEBACKGROUND 500 * 200
@@ -79,7 +82,6 @@ struct host * clients = NULL;
 struct host * localhost = NULL;
 struct host * server = NULL; // this is used only by the clients to store server info
 int yes = 1; // this is used for setsockopt
-char received_file_name[MAXDATASIZE];
 // TODO: add all function prototypes here later
 void execute_command(char * command, int requesting_client_fd);
 void client__execute_command(char * command);
@@ -560,52 +562,45 @@ int client__P2P_file_transfer(char peer_ip[], char file_name[]) {
 
   freeaddrinfo(to_client_ai);
   // }
-char buffer[MAXDATASIZE] = {
-    0
-  };
-  // send the filename
+  char buffer[MAXDATASIZE] = {0};
+  struct stat s;
+  stat(file_name, &s);
+  FILE *file = fopen(file_name, "rb");
+  long size = s.st_size;
   sprintf(buffer, "FILENAME %s\n", file_name);
-   if (send(to_client -> fd, buffer, sizeof(buffer), 0) == -1) {
-      // changePrint("[DONOTLOG]Error in sending file.");
-    }
-  // Send the file
-  
-  FILE * file_pointer = fopen(file_name, "rb");
-  while (fgets(buffer, MAXDATASIZE, file_pointer) != NULL) {
-    if (send(to_client -> fd, buffer, sizeof(buffer), 0) == -1) {
-      // changePrint("[DONOTLOG]Error in sending file.");
-    }
-    bzero(buffer, MAXDATASIZE);
+  send(to_client->fd, buffer, sizeof(buffer), 0);
+  sprintf(buffer, "FILESIZE %ld\n", size);
+  send(to_client->fd, buffer, sizeof(buffer), 0);
+  while (size > 0) { 
+      int len = fread(buffer, 1, min(sizeof(buffer), size), file); 
+      send(to_client->fd, buffer, len, 0);
+      size -= len;
   }
-  close(to_client -> fd);
-
- cse4589_print_and_log("[SENDFILE:SUCCESS]\n");
- cse4589_print_and_log("[SENDFILE:END]\n");
-
+  fclose(file);
+  cse4589_print_and_log("[SENDFILE:SUCCESS]\n");
+  cse4589_print_and_log("[SENDFILE:END]\n");
 }
 
 void client__receive_file_from_peer(int peer_fd) {
-  int n;
-  char buffer[MAXDATASIZE];
-    n = recv(peer_fd, buffer, MAXDATASIZE, 0);
-    sscanf(buffer, "FILENAME %s\n", received_file_name);
-    FILE * file_pointer = fopen(received_file_name, "wb+");
-    fflush(stdout);
-  while (1) {
-    n = recv(peer_fd, buffer, MAXDATASIZE, 0);
-    if (n <= 0) {
-        cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
-        cse4589_print_and_log("[RECIEVE:END]\n");
-        fflush(stdout);
-        fclose(file_pointer);
-        return;
-    } 
-
-    fprintf(file_pointer, "%s", buffer);
-    
-    bzero(buffer, MAXDATASIZE);
-  }
-    
+  char buffer[MAXDATASIZE] = {0};
+  char temp[MAXDATASIZE] = {0};
+  char received_file_name[MAXDATASIZE];
+  recv(peer_fd, buffer, MAXDATASIZE, 0);
+  sscanf(buffer, "FILENAME %s\n", received_file_name);
+  recv(peer_fd, buffer, MAXDATASIZE, 0);
+  sscanf(buffer, "FILESIZE %s\n", temp);
+  long received_file_size = atoi(temp);
+  FILE *file = fopen("somepdf.pdf", "wb"); 
+  while(received_file_size>0) {
+    int len = recv(peer_fd, buffer, min(sizeof(buffer), received_file_size), 0);
+    fwrite(buffer, 1, len, file);
+    received_file_size=received_file_size-len;
+  } 
+  fclose(file); 
+  cse4589_print_and_log("[RECIEVE:SUCCESS]\n");
+  cse4589_print_and_log("[RECIEVE:END]\n");
+  fflush(stdout);
+  close(peer_fd);
 }
 
 /// Following are for client only
